@@ -1,0 +1,1554 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Balaji Transports — Fleet Operations Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+ --bg:#0a0e14;--bg2:#0f141c;--panel:#141b26;--panel2:#1b2430;--line:#232e3d;--line2:#2e3b4d;
+ --txt:#e8eef5;--txt2:#c3ceda;--mut:#7d8b9c;--faint:#5a6673;
+ --red:#ff5c57;--amber:#e3b341;--grn:#4ec46e;--blu:#4f9cff;--pur:#b98cff;--teal:#33c9d6;--pink:#f778ba;
+ --accent:#4f9cff;--shadow:0 4px 24px #0006;
+ --sans:'Segoe UI',-apple-system,Roboto,Helvetica,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:22px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+button{background:var(--panel2);border:1px solid var(--line2);color:var(--txt);border-radius:7px;padding:11px 20px;cursor:pointer;font-size:20px;font-family:inherit;transition:.15s}
+button:hover{border-color:var(--accent);background:#212c3a}
+button.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.pri:hover{background:#3d87ea}
+input,select{background:var(--bg2);border:1px solid var(--line2);color:var(--txt);border-radius:7px;padding:11px 14px;font-size:19px;font-family:inherit}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+label.fl{font-size:15px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+select[multiple]{min-width:200px;min-height:120px;padding:4px}
+select[multiple] option{padding:6px 8px}
+/* checkbox multiselect */
+.ms{position:relative;min-width:230px}
+.ms-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg2);border:1px solid var(--line2);color:var(--txt);border-radius:7px;padding:11px 14px;font-size:19px;cursor:pointer;user-select:none;width:100%}
+.ms-btn:hover{border-color:var(--accent)}
+.ms-btn .cnt{background:var(--accent);color:#fff;font-size:14px;font-weight:700;border-radius:12px;padding:1px 10px;min-width:26px;text-align:center}
+.ms-btn .cnt.zero{background:var(--line2);color:var(--mut)}
+.ms-btn .arw{color:var(--mut);font-size:15px}
+.ms-panel{display:none;position:absolute;z-index:40;top:calc(100% + 4px);left:0;right:0;background:var(--panel);border:1px solid var(--line2);border-radius:9px;box-shadow:var(--shadow);max-height:340px;overflow:auto;padding:6px}
+.ms.open .ms-panel{display:block}
+.ms-search{width:100%;margin:4px 0 6px;padding:9px 12px;font-size:17px}
+.ms-tools{display:flex;gap:8px;padding:2px 6px 8px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.ms-tools a{color:var(--accent);font-size:15px;cursor:pointer}
+.ms-opt{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;cursor:pointer;font-size:18px}
+.ms-opt:hover{background:var(--panel2)}
+.ms-opt input{width:20px;height:20px;accent-color:var(--accent);cursor:pointer;padding:0}
+.ms-opt.hide{display:none}
+/* login */
+#login{position:fixed;inset:0;background:radial-gradient(1200px 600px at 50% -10%,#152232,#0a0e14 60%);display:flex;align-items:center;justify-content:center;z-index:100}
+.loginbox{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:48px 44px;width:520px;box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:16px;margin-bottom:6px}
+.brand .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--teal));display:flex;align-items:center;justify-content:center;font-size:30px}
+.loginbox h1{font-size:27px;margin:0;font-weight:700}.loginbox .tag{color:var(--mut);font-size:18px}
+.loginbox p{color:var(--mut);margin:22px 0 6px;font-size:17px;line-height:1.5}
+.loginbox label{display:block;font-size:16px;color:var(--mut);margin:20px 0 7px;text-transform:uppercase;letter-spacing:.4px}
+.loginbox input{width:100%}.loginbox button{width:100%;margin-top:28px;padding:16px}
+#loginErr{color:var(--red);font-size:18px;margin-top:14px;min-height:22px}
+/* header */
+header{position:sticky;top:0;z-index:20;background:#0a0e14ee;backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:11px 20px}
+.hrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.htitle{display:flex;align-items:center;gap:9px}.htitle .logo{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--accent),var(--teal));display:flex;align-items:center;justify-content:center;font-size:14px}
+h1{font-size:23px;margin:0;font-weight:700;letter-spacing:.2px}
+.mut{color:var(--mut)}.scopebar{font-size:18px;color:var(--txt2);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:7px 18px}
+.ctrl{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap}
+.tabs{display:flex;gap:3px;overflow-x:auto;padding:0 14px;border-bottom:1px solid var(--line);background:var(--bg2)}
+.tabs::-webkit-scrollbar{height:8px}.tabs::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+.tab{padding:15px 20px;white-space:nowrap;cursor:pointer;color:var(--mut);font-size:19px;font-weight:500;border-bottom:3px solid transparent;transition:.12s}
+.tab:hover{color:var(--txt2)}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.tab.sep{border-left:1px solid var(--line);margin-left:5px;padding-left:14px}
+.wrap{max-width:1800px;margin:0 auto;padding:24px}
+.phead{display:flex;align-items:baseline;gap:10px;margin:2px 0 4px}
+h2{font-size:30px;margin:0;color:var(--txt);font-weight:700}
+.psub{color:var(--mut);font-size:19px;margin:0 0 18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:18px 0}
+.kpi{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:13px;padding:22px 24px;position:relative;overflow:hidden}
+.kpi:before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--accent)}
+.kpi.bad:before{background:var(--red)}.kpi.warn:before{background:var(--amber)}.kpi.ok:before{background:var(--grn)}.kpi.pur:before{background:var(--pur)}.kpi.blu:before{background:var(--blu)}
+.kpi .n{font-size:40px;font-weight:700;letter-spacing:-.5px}
+.kpi.bad .n{color:var(--red)}.kpi.warn .n{color:var(--amber)}.kpi.ok .n{color:var(--grn)}.kpi.pur .n{color:var(--pur)}.kpi.blu .n{color:var(--blu)}
+.kpi .l{color:var(--mut);font-size:16px;margin-top:6px;text-transform:uppercase;letter-spacing:.3px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:22px 24px;margin:18px 0;box-shadow:0 1px 3px #0003}
+.card h3{margin:0 0 16px;font-size:21px;font-weight:600;color:var(--txt2)}
+.chead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}@media(max-width:1100px){.grid2{grid-template-columns:1fr}}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}@media(max-width:1200px){.grid3{grid-template-columns:1fr}}
+canvas{max-height:560px !important;cursor:pointer}
+.card > div[style*="height"] canvas{max-height:none !important;height:100% !important}
+.tbl-wrap{max-height:640px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.tbl-wrap::-webkit-scrollbar{width:12px;height:12px}.tbl-wrap::-webkit-scrollbar-thumb{background:var(--line2);border-radius:5px}
+table{width:100%;border-collapse:collapse;font-size:19px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{position:sticky;top:0;background:var(--panel2);color:var(--mut);font-weight:600;z-index:1;font-size:16px;text-transform:uppercase;letter-spacing:.3px}
+tbody tr:nth-child(even){background:#ffffff04}
+tr:hover td{background:#26324a55}.r{text-align:right}
+.clik{cursor:pointer}.clik:hover td{background:#2b3a52}
+.tbl-wrap tr.row-active td{background:#4f9cff2e !important;box-shadow:inset 3px 0 0 var(--accent)}
+.narr-link{color:var(--accent);cursor:pointer;font-weight:600;border-bottom:1px dashed var(--accent)}
+.narr-link:hover{color:#fff}
+.narr-link.active{background:#4f9cff30;border-radius:4px;padding:0 3px;box-shadow:inset 0 0 0 1px var(--accent)}
+/* +/- expand-collapse accordion groups (cancellation breakdowns) */
+.acc-item{border:1px solid var(--line);border-radius:9px;background:var(--panel2);overflow:hidden}
+.acc-item+.acc-item{margin-top:8px}
+.acc-item summary.acc-sum{cursor:pointer;padding:13px 16px;list-style:none;font-size:18px;color:var(--txt2);display:flex;align-items:center;gap:12px;user-select:none}
+.acc-item summary.acc-sum::-webkit-details-marker{display:none}
+.acc-item summary.acc-sum::marker{content:''}
+.acc-ic{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:var(--accent);color:#fff;font-weight:700;font-size:17px;flex:none;line-height:1}
+.acc-ic::before{content:'+'}
+.acc-item[open]>summary .acc-ic{background:var(--red)}
+.acc-item[open]>summary .acc-ic::before{content:'−'}
+.acc-body{padding:0 16px 16px;border-top:1px solid var(--line)}
+.tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:16px;font-weight:600}
+.t-red{background:#ff5c5722;color:var(--red)}.t-amb{background:#e3b34122;color:var(--amber)}.t-blu{background:#4f9cff22;color:var(--blu)}.t-grn{background:#4ec46e22;color:var(--grn)}
+.xls{font-size:18px;padding:9px 18px;background:#1a3a24;border-color:#2b5b38;color:#7fe39a}
+.xls:hover{background:#22482e;border-color:var(--grn)}
+.note{color:var(--faint);font-size:17px;margin-top:12px}
+.pill{display:inline-block;background:var(--panel2);border:1px solid var(--line2);border-radius:20px;padding:8px 18px;font-size:18px;margin:4px;color:var(--txt2)}
+.empty{color:var(--mut);padding:50px;text-align:center;font-size:21px}
+.hint{font-size:16px;color:var(--teal);margin-left:6px;font-weight:500}
+.filterbar{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:20px 22px;margin-bottom:18px}
+.filterbar .fg{display:flex;flex-direction:column;gap:6px}
+.badge{display:inline-block;font-size:16px;font-weight:700;padding:6px 14px;border-radius:7px;background:#4f9cff22;color:var(--blu);text-transform:uppercase;letter-spacing:.4px}
+.badge.own{background:#4ec46e22;color:var(--grn)}
+/* progress */
+#prog{position:fixed;inset:0;background:#0a0e14e6;display:none;align-items:center;justify-content:center;z-index:60}
+.progbox{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:38px 46px;width:520px;text-align:center;box-shadow:var(--shadow);font-size:20px}
+.progbox .spin{width:44px;height:44px;border:5px solid var(--line2);border-top-color:var(--accent);border-radius:50%;margin:0 auto 20px;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.bar{height:11px;background:var(--panel2);border-radius:6px;margin-top:20px;overflow:hidden}
+.bar > div{height:100%;background:linear-gradient(90deg,var(--accent),var(--teal));width:0%;transition:width .25s}
+/* modal */
+#modal{position:fixed;inset:0;background:#000a;backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:80;padding:22px}
+.modalbox{background:var(--panel);border:1px solid var(--line2);border-radius:15px;max-width:1300px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.modalhead{display:flex;align-items:center;justify-content:space-between;padding:22px 26px;border-bottom:1px solid var(--line)}
+.modalhead h3{margin:0;font-size:23px;font-weight:700}
+.modalbody{overflow:auto;padding:22px 26px}
+.modalbody table{border:1px solid var(--line);border-radius:8px}
+.x{cursor:pointer;font-size:32px;color:var(--mut);line-height:1;padding:0 6px}.x:hover{color:var(--txt)}
+.mbtns{display:flex;gap:12px;align-items:center}
+/* ============ MOBILE ============ */
+@media(max-width:760px){
+ body{font-size:16px}
+ button{font-size:15px;padding:9px 14px}
+ input,select{font-size:15px;padding:9px 11px}
+ .wrap{padding:12px}
+ header{padding:9px 12px}
+ .hrow{gap:9px}
+ h1{font-size:17px}
+ .htitle .logo{width:30px;height:30px;font-size:16px}
+ .scopebar{font-size:13px;padding:5px 12px;order:3;width:100%}
+ .ctrl{margin-left:0;width:100%;gap:7px}
+ .ctrl input[type=date]{flex:1;min-width:0}
+ .ctrl #vtf{flex:1}
+ .tab{padding:12px 14px;font-size:15px}
+ .phead h2,h2{font-size:21px}
+ .psub{font-size:14px}
+ .kpis{grid-template-columns:1fr 1fr;gap:10px}
+ .kpi{padding:15px 14px}
+ .kpi .n{font-size:27px}
+ .kpi .l{font-size:12px}
+ .card{padding:14px;border-radius:11px}
+ .card h3{font-size:16px}
+ .grid2,.grid3{grid-template-columns:1fr;gap:12px}
+ canvas{max-height:340px !important}
+ .card > div[style*="height"]{height:460px !important}
+ table{font-size:14px}
+ th,td{padding:8px 10px}
+ th{font-size:12px}
+ .tag{font-size:12px;padding:2px 8px}
+ .xls{font-size:14px;padding:7px 12px}
+ .note{font-size:13px}
+ .pill{font-size:13px;padding:6px 12px}
+ .filterbar{gap:10px;padding:14px}
+ .filterbar .fg{flex:1;min-width:140px}
+ .ms{min-width:150px}
+ .ms-btn{font-size:15px;padding:9px 11px}
+ .ms-opt{font-size:15px;padding:8px 10px}
+ .loginbox{width:92%;padding:30px 24px}
+ .loginbox h1{font-size:22px}
+ .modalbox{max-height:92vh}
+ .modalhead h3{font-size:17px}
+ .modalbody{padding:12px}
+ .badge{font-size:13px;padding:5px 11px}
+ .tbl-wrap{max-height:70vh}
+}
+@media(max-width:420px){
+ .kpis{grid-template-columns:1fr}
+}
+</style></head><body>
+
+<div id="login"><div class="loginbox">
+<div class="brand"><div class="logo">🚛</div><div><h1>Balaji Transports</h1><div class="tag">Fleet Operations Intelligence</div></div></div>
+<p>Live connection to the operations API. Your password is used only in this browser to obtain a session token — it is never stored in this file.</p>
+<label>Username</label><input id="lu" value="Raghu" autocomplete="username">
+<label>Password</label><input id="lp" type="password" autocomplete="current-password">
+<button class="pri" id="lbtn">Connect</button>
+<div id="loginErr"></div>
+</div></div>
+
+<div id="prog"><div class="progbox"><div class="spin"></div><div id="progTxt">Loading…</div><div class="bar"><div id="progBar"></div></div></div></div>
+
+<div id="modal"><div class="modalbox">
+<div class="modalhead"><h3 id="modalTitle"></h3><div class="mbtns"><button class="xls" id="modalXls">⬇ Excel</button><button id="modalFilter">Filter dashboard</button><span class="x" id="modalX">✕</span></div></div>
+<div class="modalbody" id="modalBody"></div>
+</div></div>
+
+<div id="app" style="display:none">
+<header><div class="hrow">
+<div class="htitle"><div class="logo">🚛</div><h1>Balaji Ops Intelligence</h1></div>
+<span class="scopebar" id="scope">No data loaded</span>
+<div class="ctrl">
+<label class="fl">From</label><input type="date" id="from">
+<label class="fl">To</label><input type="date" id="to">
+<select id="vtf"><option value="">All vehicle types</option></select>
+<button class="pri" id="load">Load range</button>
+<button id="logout">Logout</button>
+</div></div></header>
+<div class="tabs" id="tabs"></div>
+<div class="wrap" id="pages"><div class="empty">Select a date range and click <b>Load range</b> to fetch live data from the operations API.</div></div>
+</div>
+
+<script>/* ============ CONFIG ============ */
+const API="https://external.balajitransports.in/api";
+const SHIP_TYPES="Prepaid,Rake,StockYard,To-Pay,Internal,Dolvi,BMM";
+let TOKEN="";
+let SHIP=[],DSL=[],BT=[],BTSET=new Set(),BTTYPE={},BTOWN=new Set();
+let LOADED={from:null,to:null};
+const TH={"16W":[50,40],"18W":[70,50],"14W":[40,30],"12W":[30,25]};
+// New capacity rules. Rake & Internal share one set; everything else the other.
+// limit(cls, shipmentType) -> allowed tonnes (0 = no threshold / equipment)
+const CAP_RAKE={"16W":45,"18W":58,"14W":40,"12W":40};
+const CAP_OTHER={"16W":40,"18W":45,"14W":30,"12W":25};
+function loadLimit(cls,shipmentType){
+  if(cls==='OTHER')return 0;
+  const rakeGroup=(shipmentType==='Rake'||shipmentType==='Internal');
+  return (rakeGroup?CAP_RAKE:CAP_OTHER)[cls]||0;
+}
+const norm=s=>String(s==null?'':s).replace(/\s+/g,'').toUpperCase();
+const clsOf=t=>{t=String(t);return t.includes("16 W")?"16W":t.includes("18 W")?"18W":t.includes("14 W")?"14W":t.includes("12 W")?"12W":"OTHER";};
+// equipment = crane/coil/hydra/lcv/cars — excluded from truck-fleet comparison reports
+const isEquip=t=>{t=String(t).toLowerCase();return t.includes("crane")||t.includes("coil")||t.includes("hydra")||t.includes("lcv")||t.includes("small vehicle")||t.includes("car");};
+const isTruck=o=>!isEquip(o.VehicleType);
+// ---- dashboard-request categories (VehicleType text from the Diesel API) ----
+const isByCan=t=>norm(t).includes("BYCAN");
+// A1 · Diesel — By Can uses the Vehicle Number column instead: a row qualifies when the
+// Vehicle Number is blank, or the Vehicle Number text itself contains "BY CAN".
+const isByCanVehicle=o=>{const vk=o.vk!=null?o.vk:norm(o.VehicleNo);return vk===''||vk.includes("BYCAN");};
+const isCarLmv=t=>{t=String(t).toLowerCase();return t.includes("car")||t.includes("lmv");};
+const isCraneT=t=>String(t).toLowerCase().includes("crane");
+// mutually-exclusive bucket used by the One-Page Summary tab
+function dieselCat(t){
+  if(isByCan(t))return"By Can";
+  const x=String(t).toLowerCase();
+  if(x.includes("crane"))return"Cranes";
+  if(x.includes("car")||x.includes("lmv"))return"Car & LMV";
+  if(x.includes("coil")||x.includes("hydra")||x.includes("small vehicle"))return"Other Equipment";
+  return"Trucks & Trailers";
+}
+
+/* ============ AUTH ============ */
+async function login(u,p){
+  const r=await fetch(`${API}/WebLogin?Username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`,
+    {method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({username:u,password:p})});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  const j=await r.json();if(!j.token)throw new Error(j.message||"Login failed");return j.token;
+}
+async function reauth(){TOKEN=await login(document.getElementById('lu').value,sessionStorage.getItem('bp')||'');}
+
+/* ============ VEHICLE MASTER ============ */
+async function loadBT(){
+  const r=await fetch(`${API}/BTVehicles`,{headers:{accept:"text/plain",Authorization:"Bearer "+TOKEN}});
+  BT=r.ok?await r.json():[];
+  BTSET=new Set();BTTYPE={};BTOWN=new Set();
+  for(const v of BT){const vk=norm(v.VehicleNo);BTSET.add(vk);if(v.VehicleType)BTTYPE[vk]=v.VehicleType;if(v.VehicleOwn)BTOWN.add(vk);}
+}
+
+/* ============ FETCH ============ */
+const ymd=d=>d.toISOString().slice(0,10);
+function* weekChunks(from,to){let s=new Date(from);while(s<=to){let e=new Date(s);e.setDate(e.getDate()+6);if(e>to)e=new Date(to);yield[ymd(s),ymd(e)];s=new Date(e);s.setDate(s.getDate()+1);}}
+async function fetchDiesel(f,t){const r=await fetch(`${API}/DieselIndents/GetAllDieselIndentReport?From=${f}&to=${t}`,{headers:{accept:"text/plain",Authorization:"Bearer "+TOKEN}});if(r.status===401)throw new Error("401");return r.ok?await r.json():[];}
+async function fetchShipPage(f,t,page,size){const url=`${API}/VehicleAttendence/GetAllShipmentDetails?From=${f}&To=${t}&VehicleID=&VehicleType=%20&Regdate=%20&make=&YearOfManufacture=%20&shipmentType=${SHIP_TYPES}&PageNumber=${page}&PageSize=${size}`;
+  const r=await fetch(url,{method:"POST",headers:{accept:"application/json, text/plain, */*",Authorization:"Bearer "+TOKEN,"content-type":"application/json; charset=UTF-8"},body:JSON.stringify({startdate:f,enddate:t,vehicle_No:"",VehicleType:"",Regdate:"",make:"",YearOfManufacture:""})});
+  if(r.status===401)throw new Error("401");return r.ok?await r.json():{Data:[],TotalRecords:0};}
+
+const P=document.getElementById('prog'),PT=document.getElementById('progTxt'),PB=document.getElementById('progBar');
+const showProg=(t,pct)=>{P.style.display='flex';PT.textContent=t;PB.style.width=(pct||0)+'%';};
+const hideProg=()=>P.style.display='none';
+
+async function loadRange(fromStr,toStr){
+  const from=new Date(fromStr+"T00:00:00"),to=new Date(toStr+"T00:00:00");
+  const chunks=[...weekChunks(from,to)];const ship=[],dsl=[];let i=0;
+  for(const[f,t]of chunks){
+    showProg(`Fetching diesel  ${f} → ${t}`,100*i/(chunks.length*2));
+    try{dsl.push(...await fetchDiesel(f,t));}catch(e){if(e.message==="401"){await reauth();dsl.push(...await fetchDiesel(f,t));}}
+    let page=1,size=2000,total=Infinity;
+    while((page-1)*size<total){showProg(`Fetching shipments  ${f} → ${t}  (page ${page})`,100*(i+0.5)/(chunks.length*2));
+      let res;try{res=await fetchShipPage(f,t,page,size);}catch(e){if(e.message==="401"){await reauth();res=await fetchShipPage(f,t,page,size);}else throw e;}
+      ship.push(...(res.Data||[]));total=res.TotalRecords||0;page++;if(page>60)break;}
+    i++;
+  }
+  hideProg();return{ship,dsl};
+}
+
+/* ============ CANCELLATION ACTOR RESOLUTION ============
+   The curated diesel row only ever carried "IssuedBy". The raw API record may carry a separate field for
+   who actually cancelled the indent, under a name we can't know in advance — so every diesel row keeps its
+   full raw record (_raw) and we search it, case/spacing-insensitively, for the most specific plausible
+   field before falling back to the issuer field. This is a best-effort resolver, not a confirmed mapping:
+   the Summary tab shows exactly which raw field each name was resolved from, plus the raw record itself,
+   so it can be checked against the source data and the field list refined if needed. */
+function findRawField(raw,candidates){
+  if(!raw)return null;
+  const keys=Object.keys(raw);
+  const norm2=s=>s.replace(/[^a-z0-9]/gi,'').toLowerCase();
+  for(const cand of candidates){
+    const nc=norm2(cand);
+    const hit=keys.find(k=>norm2(k)===nc);
+    if(hit&&raw[hit]!=null&&String(raw[hit]).trim()!=='')return{field:hit,value:String(raw[hit]).trim()};
+  }
+  return null;
+}
+const CANCEL_FIELD_CANDIDATES=['CancelledBy','CanceledBy','CancelBy','CancelUser','CancelledUser','CancelByUser','CancelActionBy','ActionBy','ModifiedBy','UpdatedBy','LastModifiedBy','ApprovedBy'];
+const ISSUER_FIELD_CANDIDATES=['IssuedBy','IssuedByName','Issuer','IssuerName','CreatedBy','UserName','User','EmployeeName','StaffName'];
+// ============ OWNER-NAME / "Pending" RESOLUTION (forward-compatible — the field does not exist in the
+// connected Diesel API yet) ============
+// The 5 · OST Payments — Pending List tab is meant to be driven by an "OwnerName" column carrying the value
+// "Pending" — per your instruction, once your backend adds it. Until it does, findRawField() below simply
+// never finds a match (raw has no such key on any record), so ownerName resolves to null on every row and the
+// tab correctly shows nothing/0, exactly as asked ("if the OwnerName column or the 'Pending' value is not
+// found, display 0 or leave it blank") — no fallback to any other calculation. The candidate list is
+// case/spacing-insensitive and covers a few likely spellings so this activates automatically, with no further
+// code changes, the moment the API starts sending the field under any of these names.
+const OWNER_FIELD_CANDIDATES=['OwnerName','Owner_Name','Owner Name','OwnerNm','Owner'];
+function resolveOwner(raw){
+  const o=findRawField(raw,OWNER_FIELD_CANDIDATES);
+  return o?{name:o.value,field:o.field}:{name:null,field:null};
+}
+function whoCancelled(o){
+  const raw=o._raw;
+  const c=findRawField(raw,CANCEL_FIELD_CANDIDATES);
+  if(c)return{name:c.value,field:c.field,src:'cancel-specific field on the raw record'};
+  const i=findRawField(raw,ISSUER_FIELD_CANDIDATES);
+  if(i)return{name:i.value,field:i.field,src:'issuer field (fallback — no cancel-specific field found on this record)'};
+  if(o.IssuedBy)return{name:o.IssuedBy,field:'IssuedBy',src:'curated IssuedBy field (fallback)'};
+  return{name:'(unspecified)',field:null,src:'no matching name field found on this record'};
+}
+
+/* ============ INGEST (BT-aware) ============ */
+function ingest(raw){
+  // shipment dedup by shipmentId, SUM NtWt; type from BT master (authoritative)
+  const sm=new Map();
+  for(const r of raw.ship){const id=r.shipmentId,vk=norm(r.vehicle);
+    if(!sm.has(id))sm.set(id,{shipmentId:id,vk,ShipmentType:r.ShipmentType,NtWt:+r.NtWt||0,d:(r.ShipmentDate||'').slice(0,10),Location:r.Location||'',Driver:r.Driver||'',Unload:r.Unload||'',ProductName:r.ProductName||'',GCNo:r.GCNo||'',IndentNo:r.IndentNo||''});
+    else sm.get(id).NtWt+=(+r.NtWt||0);}
+  SHIP=[...sm.values()].map(o=>{const vt=BTTYPE[o.vk]||'Unknown';return{...o,VehicleType:vt,cls:clsOf(vt),isBT:BTSET.has(o.vk),own:BTOWN.has(o.vk)};});
+  // diesel: merge duplicate rows sharing an IndentID instead of discarding them — a later-seen row
+  // sometimes carries the cancellation / actor field that a first-seen row lacked — then build the
+  // curated row from the merged raw record. Type comes from BT master, fallback to the indent's own.
+  const rawM=new Map();
+  for(const r of raw.dsl){const id=r.IndentID;
+    if(!rawM.has(id)){rawM.set(id,{...r});continue;}
+    const acc=rawM.get(id);
+    for(const key in r){const v=r[key];if((acc[key]==null||String(acc[key]).trim()==='')&&v!=null&&String(v).trim()!=='')acc[key]=v;}
+    if(r.Cancel&&!acc.Cancel)acc.Cancel=r.Cancel;
+    if(r.IndentCanceledDt&&!acc.IndentCanceledDt)acc.IndentCanceledDt=r.IndentCanceledDt;
+  }
+  const dm=new Map();
+  for(const[id,r]of rawM.entries()){const vk=norm(r.VehicleNo);const vt=BTTYPE[vk]||r.VehicleType||'Unknown';
+    const obj={IndentID:id,IndentNo:r.IndentNo,vk,d:(r.Date||'').slice(0,10),HSD:+r.HSD||0,HSDAmount:+r.HSDAmount||0,Cash:+r.Cash||0,Bunk:(r.Bunk||'').trim(),Location:r.Location||'',IssuedBy:r.IssuedBy||'',Driver:r.Driver||'',canc:r.Cancel?1:0,issueDT:r.IssueDateTime||null,cancelDT:r.IndentCanceledDt||null,VehicleType:vt,cls:clsOf(vt),isBT:BTSET.has(vk),own:BTOWN.has(vk),Remarks:r.Remarks||'',_raw:r};
+    const wc=whoCancelled(obj);obj.cancelBy=wc.name;obj.cancelByField=wc.field;obj.cancelBySrc=wc.src;
+    const ow=resolveOwner(r);obj.OwnerName=ow.name;obj.ownerField=ow.field;
+    dm.set(id,obj);}
+  DSL=[...dm.values()];
+  const sel=document.getElementById('vtf');sel.length=1;
+  [...new Set([...SHIP,...DSL].map(o=>o.VehicleType))].sort().forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
+}
+
+/* ============ FILTER ============ */
+let F={vt:''};
+let fShip=[],fDsl=[],fDslOk=[];   // full diesel (all transport) for diesel-only reports
+let cShip=[],cDsl=[],cDslOk=[];   // BT-only, for comparison reports
+function applyFilter(){
+  const vf=o=>!F.vt||o.VehicleType===F.vt;
+  fShip=SHIP.filter(vf);fDsl=DSL.filter(vf);fDslOk=fDsl.filter(o=>!o.canc);
+  cShip=fShip.filter(o=>o.isBT);cDsl=fDsl.filter(o=>o.isBT);cDslOk=cDsl.filter(o=>!o.canc);
+  const span=daysBetween(LOADED.from,LOADED.to);
+  document.getElementById('scope').innerHTML=`${LOADED.from} → ${LOADED.to} · ${span}d · ${fShip.length.toLocaleString()} shipments · ${fDsl.length.toLocaleString()} indents${F.vt?' · '+F.vt:''}`;
+}
+const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5)+1;
+
+/* ============ UTIL ============ */
+const by=(arr,k)=>{const m=new Map();for(const o of arr){const key=typeof k==='function'?k(o):o[k];if(!m.has(key))m.set(key,[]);m.get(key).push(o);}return m;};
+const sum=(arr,f)=>arr.reduce((a,o)=>a+(f(o)||0),0);
+const uniq=(arr,f)=>new Set(arr.map(f)).size;
+const money=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+const nfmt=n=>(Math.round(n*100)/100).toLocaleString('en-IN');
+const fmtDate=dd=>{if(!dd)return'(date not recorded)';const dt=new Date(dd+'T00:00:00');return isNaN(dt)?dd:dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});};
+const CH={red:'#ff5c57',amb:'#e3b341',grn:'#4ec46e',blu:'#4f9cff',pur:'#b98cff',mut:'#7d8b9c',grid:'#232e3d',teal:'#33c9d6',pink:'#f778ba'};
+const PAL=[CH.blu,CH.grn,CH.amb,CH.pur,CH.red,CH.teal,CH.pink,'#7ee787','#ffa657'];
+Chart.defaults.color=CH.mut;Chart.defaults.borderColor=CH.grid;Chart.defaults.font.family="'Segoe UI',sans-serif";Chart.defaults.font.size=18;
+Chart.defaults.plugins.legend.labels.font={size:18};
+Chart.defaults.plugins.legend.labels.padding=16;
+const grad=(id,c1,c2)=>{const el=document.getElementById(id);if(!el)return c1;const ctx=el.getContext('2d');const g=ctx.createLinearGradient(0,0,0,el.height||500);g.addColorStop(0,c1);g.addColorStop(1,c2);return g;};
+const alpha=(hex,a)=>hex+Math.round(a*255).toString(16).padStart(2,'0');
+const charts={};
+function mkChart(id,cfg,drill){if(charts[id])charts[id].destroy();const el=document.getElementById(id);if(!el)return;
+  cfg.options=cfg.options||{};cfg.options.plugins=cfg.options.plugins||{};
+  cfg.options.plugins.tooltip=Object.assign({backgroundColor:'#141b26',borderColor:'#2e3b4d',borderWidth:1,padding:14,titleColor:'#e8eef5',bodyColor:'#c3ceda',titleFont:{size:18},bodyFont:{size:17}},cfg.options.plugins.tooltip||{});
+  cfg.options.maintainAspectRatio=false;
+  if(drill)cfg.options.onClick=(evt,els)=>{if(els.length)drill(els[0].index);};
+  charts[id]=new Chart(el,cfg);}
+
+/* ============ EXCEL ============ */
+function xlsx(name,rows,cols){const data=[cols.map(c=>c.h)].concat(rows.map(r=>cols.map(c=>{const v=r[c.k];return c.raw?c.raw(v,r):v;})));
+  const ws=XLSX.utils.aoa_to_sheet(data);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,name.slice(0,28));
+  XLSX.writeFile(wb,`${name}_${LOADED.from}_${LOADED.to}.xlsx`);}
+window.__EXP={};window.__ROWCLICK={};window.__NARRCLICK={};
+// Highlights the exact inline element a user just clicked inside a plain-English narrative (a person's
+// name or an indent reference) so that, after the drilldown modal is closed, the page is still sitting
+// right there — the narrative HTML is never rebuilt while the modal is open, so scroll position is already
+// preserved; this just makes it easy to see which mention was clicked.
+function markNarrActive(el){document.querySelectorAll('.narr-link.active').forEach(x=>x.classList.remove('active'));if(el)el.classList.add('active');}
+// Shared column set for a cancelled-indent detail modal/table — used by both the Summary tab's cancelled-
+// indent tables and the One-Page Summary's plain-English narrative, so "Issued By" resolution, TAT and the
+// raw-record view stay identical everywhere a cancelled indent is shown.
+function buildCancDetailCols(){
+  const rawCell=v=>v?`<details><summary style="cursor:pointer;color:var(--accent);font-size:15px">view raw record</summary><pre style="white-space:pre-wrap;font-size:12px;max-width:380px;color:var(--txt2);margin:8px 0 0">${JSON.stringify(v,null,1).replace(/</g,'&lt;')}</pre></details>`:'';
+  return[
+    {h:'Date',k:'d'},
+    {h:'Indent (which)',k:'IndentNo'},
+    {h:'Vehicle',k:'vk'},
+    {h:'Type',k:'VehicleType'},
+    {h:'Location (where)',k:'Location',f:v=>v||'(blank)'},
+    {h:'Bunk',k:'Bunk'},
+    {h:'Issued By (resolved)',k:'cancelBy',f:(v,r)=>`${v||'(unspecified)'} <span class="tag ${r.cancelByField?'t-blu':'t-red'}" style="margin-left:6px;font-size:13px" title="${r.cancelBySrc||''}">${r.cancelByField||'no field found'}</span>`},
+    {h:'IssuedBy (curated field, raw)',k:'IssuedBy',f:v=>v||'<span class="mut">blank</span>'},
+    {h:'Reason (what went wrong)',k:'Remarks',f:v=>v?v:'<span class="mut">— no remarks logged —</span>'},
+    {h:'TAT h',k:'tatR',r:1,f:v=>v==null?'':v},
+    {h:'Litres',k:'HSD',r:1},
+    {h:'₹',k:'HSDAmount',r:1,f:v=>money(v)},
+    {h:'Driver',k:'Driver'},
+    {h:'Raw API record',k:'_raw',f:rawCell,raw:v=>v?JSON.stringify(v):''}
+  ];
+}
+function tableCard(title,rows,cols,exportName,rowClick){
+  window.__EXP[exportName]=()=>xlsx(exportName,rows,cols);
+  const btn=`<button class="xls" onclick='__EXP["${exportName}"]()'>⬇ Excel</button>`;
+  let h=`<div class="card"><div class="chead"><h3>${title} <span class="mut" style="font-weight:400">· ${rows.length.toLocaleString()} rows</span></h3>${btn}</div><div class="tbl-wrap"><table><thead><tr>`;
+  h+=cols.map(c=>`<th class="${c.r?'r':''}">${c.h}</th>`).join('')+'</tr></thead><tbody>';
+  if(!rows.length)h+=`<tr><td colspan="${cols.length}"><div class="empty">No rows in range</div></td></tr>`;
+  else h+=rows.slice(0,3000).map((r,i)=>`<tr class="${rowClick?'clik':''}" ${rowClick?`onclick='__ROWCLICK["${exportName}"](${i},this)'`:''}>`+cols.map(c=>`<td class="${c.r?'r':''}">${c.f?c.f(r[c.k],r):(r[c.k]??'')}</td>`).join('')+'</tr>').join('');
+  // clicking a row marks it active so that, after the drilldown modal is closed, the same line stays highlighted
+  // right where the user was — the underlying table is never re-rendered while the modal is open, so scroll
+  // position is preserved automatically; the highlight just makes it easy to spot again.
+  if(rowClick)window.__ROWCLICK[exportName]=(i,el)=>{
+    if(el){const tb=el.closest('table');if(tb)tb.querySelectorAll('tr.row-active').forEach(x=>x.classList.remove('row-active'));el.classList.add('row-active');}
+    rowClick(rows[i]);
+  };
+  return h+'</tbody></table></div>'+(rows.length>3000?'<p class="note">Showing first 3,000 rows; Excel export includes all '+rows.length.toLocaleString()+'.</p>':'')+'</div>';
+}
+
+/* A plain (cardless) data table for nesting inside an accordion body — same column/formatter contract as
+   tableCard, plus its own Excel export button, but without another .card wrapper around it. */
+function miniTable(rows,cols,exportName){
+  window.__EXP[exportName]=()=>xlsx(exportName,rows,cols);
+  let t=`<div class="tbl-wrap" style="margin-top:2px;max-height:420px"><table><thead><tr>`+cols.map(c=>`<th class="${c.r?'r':''}">${c.h}</th>`).join('')+'</tr></thead><tbody>';
+  t+=rows.length?rows.map(r=>'<tr>'+cols.map(c=>`<td class="${c.r?'r':''}">${c.f?c.f(r[c.k],r):(r[c.k]??'')}</td>`).join('')+'</tr>').join(''):`<tr><td colspan="${cols.length}"><div class="empty">No rows</div></td></tr>`;
+  t+='</tbody></table></div>';
+  t+=`<button class="xls" style="margin-top:10px" onclick='__EXP["${exportName}"]()'>⬇ Excel</button>`;
+  return t;
+}
+
+/* Turns any pool of rows into a set of +/- expand-collapse groups, one per distinct value of keyFn — used
+   for the cancellation breakdowns (by Issued By, by location, by vehicle, by bunk, by vehicle category…)
+   so ANY grouping dimension gets the same expandable behavior automatically, with no per-dimension code.
+   Native <details>/<summary> drives the expand/collapse — nothing is re-rendered on toggle, so the page
+   never jumps or loses scroll position, and several groups can be open at once. */
+function accordionGroups(pool,keyFn,sentenceFn,exportPrefix,fieldLabel){
+  const kf=typeof keyFn==='function'?keyFn:o=>o[keyFn];
+  const filtered=pool.filter(o=>{const v=kf(o);return v!=null&&String(v).trim()!=='';});
+  if(!filtered.length)return'<p class="mut" style="margin:8px 0 0">No cancelled indents with this detail recorded.</p>';
+  const grouped=by(filtered,kf);
+  const cols=buildCancDetailCols();
+  const rows=[...grouped.entries()].map(([kk,a])=>({key:kk,cnt:a.length,items:[...a].sort((x,y)=>x.d<y.d?1:x.d>y.d?-1:0)})).sort((x,y)=>y.cnt-x.cnt||String(x.key).localeCompare(String(y.key)));
+  return rows.map((r,i)=>{
+    const gid=exportPrefix+'_g'+i;
+    window.__NARRCLICK[gid]=el=>{markNarrActive(el);drilldown(`${fieldLabel||''}: ${r.key}`,r.items,cols);};
+    const clickAttr=`event.stopPropagation();event.preventDefault();__NARRCLICK["${gid}"](this)`;
+    const keySpan=`<span class="narr-link" onclick='${clickAttr}'>${r.key}</span>`;
+    const cntSpan=`<span class="narr-link" onclick='${clickAttr}'>${r.cnt}</span>`;
+    return`<details class="acc-item"><summary class="acc-sum"><span class="acc-ic"></span>${sentenceFn(keySpan,cntSpan,r.cnt)}</summary>
+    <div class="acc-body">${explainGroup(r.items,cols,exportPrefix+'_'+i,markNarrActive)}</div></details>`;
+  }).join('');
+}
+
+/* ============ DETAILED SUMMARY (plain-English, expandable, clickable) ============
+   Everything below is new and additive — it is only ever called from a new card appended to the END of
+   REPORTS.summary(), after all of that tab's existing content. Nothing above this block (buildCancDetailCols,
+   miniTable, accordionGroups, tableCard, the Summary tab's own charts/tables) is touched or reused with
+   different behavior, so the existing Summary section renders exactly as it did before.
+   Every "ds*" name here is a self-contained twin of an existing helper — kept separate on purpose so this new
+   section can have richer behavior (a shared pool parameter for cross-referencing clicks, a fieldLabel for
+   modal titles, per-group scoped highlighting) without changing what any existing chart/table/accordion does
+   elsewhere in the file. */
+
+// One unified detail-modal column set for THIS section, covering every field asked for — Indent Number, Date,
+// Vehicle, Driver, Location, Bunk, Issued By, Cancelled By, Cancellation/Issue Reason, Diesel Quantity, plus
+// the ₹ value and the full raw API record — used for both active and cancelled indents so every modal opened
+// from a detailed-summary sentence looks the same regardless of which finding it came from. "group" names the
+// literal field on a DSL row to cross-reference when a cell/value is clicked (e.g. clicking a vehicle number
+// opens every indent for that vehicle, not just the one row it sits in).
+function dsDetailCols(){
+  const rawCell=v=>v?`<details><summary style="cursor:pointer;color:var(--accent);font-size:15px">view raw record</summary><pre style="white-space:pre-wrap;font-size:12px;max-width:380px;color:var(--txt2);margin:8px 0 0">${JSON.stringify(v,null,1).replace(/</g,'&lt;')}</pre></details>`:'';
+  return[
+    {h:'Date',k:'d',group:'d'},
+    {h:'Indent Number',k:'IndentNo'},
+    {h:'Vehicle',k:'vk',group:'vk'},
+    {h:'Type',k:'VehicleType',group:'VehicleType'},
+    {h:'Driver',k:'Driver',f:v=>v||'<span class="mut">blank</span>',group:'Driver'},
+    {h:'Location',k:'Location',f:v=>v||'(blank)',group:'Location'},
+    {h:'Bunk',k:'Bunk',f:v=>v||'(blank)',group:'Bunk'},
+    {h:'Diesel Quantity (L)',k:'HSD',r:1},
+    {h:'₹ Value',k:'HSDAmount',r:1,f:v=>money(v)},
+    {h:'Issued By',k:'IssuedBy',f:v=>v||'<span class="mut">blank</span>',group:'IssuedBy'},
+    {h:'Status',k:'canc',f:v=>v?'<span class="tag t-red">Cancelled</span>':'<span class="tag t-grn">Active</span>'},
+    {h:'Cancelled By',k:'cancelBy',f:(v,r)=>r.canc?`${v||'(unspecified)'} <span class="tag ${r.cancelByField?'t-blu':'t-red'}" style="margin-left:6px;font-size:13px" title="${r.cancelBySrc||''}">${r.cancelByField||'no field found'}</span>`:'<span class="mut">— not cancelled —</span>',group:'cancelBy'},
+    {h:'Cancellation / Issue Reason',k:'Remarks',f:v=>v?v:'<span class="mut">— no remarks logged —</span>'},
+    {h:'Raw API record',k:'_raw',f:rawCell,raw:v=>v?JSON.stringify(v):'',noClick:true}
+  ];
+}
+// Highlight scoping for this section only — scoped to the enclosing +/- item (.acc-item) so clicking a value
+// inside one expandable finding never clears the highlight left inside a different one.
+function dsMarkActive(el){const scope=(el&&el.closest('.acc-item'))||document;scope.querySelectorAll('.narr-link.active').forEach(x=>x.classList.remove('active'));if(el)el.classList.add('active');}
+// Wires one inline clickable mention (a name or a number inside a sentence, or a table cell) to open a modal
+// with the exact matching rows. `key` must be unique per call so re-rendering the tab doesn't collide handlers.
+function dsClickSpan(text,key,title,matches){
+  window.__NARRCLICK[key]=el=>{dsMarkActive(el);drilldown(title,matches,dsDetailCols());};
+  return`<span class="narr-link" onclick='event.stopPropagation();event.preventDefault();__NARRCLICK["${key}"](this)'>${text}</span>`;
+}
+// One expand/collapse "finding" — a complete sentence (with dsClickSpan() mentions already embedded) as the
+// always-visible summary, and any HTML (a ranked table, a detail table, nested groups…) revealed underneath
+// when + is clicked. Native <details> means nothing re-renders on toggle, so scroll position is never lost.
+function dsSentenceAccordion(sentenceHtml,bodyHtml){
+  return`<details class="acc-item"><summary class="acc-sum"><span class="acc-ic"></span><span>${sentenceHtml}</span></summary>${bodyHtml?`<div class="acc-body">${bodyHtml}</div>`:''}</details>`;
+}
+// A plain (cardless) data table for nesting inside a +/- body — every cell (other than a column marked
+// noClick) is individually clickable: a "group" column opens a modal with every row across the whole `pool`
+// that shares that cell's value; any other column opens a modal with just that row's complete record.
+function dsMiniTable(rows,cols,exportName,pool,cap){
+  window.__EXP[exportName]=()=>xlsx(exportName,rows,cols);
+  const searchPool=pool||rows;
+  const lim=cap||1500;
+  let t=`<div class="tbl-wrap" style="margin-top:2px;max-height:420px"><table><thead><tr>`+cols.map(c=>`<th class="${c.r?'r':''}">${c.h}</th>`).join('')+'</tr></thead><tbody>';
+  t+=rows.length?rows.slice(0,lim).map((r,ri)=>'<tr>'+cols.map((c,ci)=>{
+    const display=c.f?c.f(r[c.k],r):(r[c.k]??'');
+    if(c.noClick)return`<td class="${c.r?'r':''}">${display}</td>`;
+    const cellKey=exportName+'_c'+ri+'_'+ci;
+    window.__NARRCLICK[cellKey]=el=>{
+      dsMarkActive(el);
+      if(c.group){
+        const gv=r[c.group];
+        const matches=searchPool.filter(o=>o[c.group]===gv);
+        drilldown(`${c.h.replace(/\s*\([^)]*\)/,'')}: ${gv||'(blank)'}`,matches,cols);
+      }else{
+        drilldown((r.IndentNo||r.IndentID)?'Indent — '+(r.IndentNo||r.IndentID):'Record',[r],cols);
+      }
+    };
+    return`<td class="${c.r?'r':''}"><span class="narr-link" onclick='event.stopPropagation();__NARRCLICK["${cellKey}"](this)'>${display===''?'(blank)':display}</span></td>`;
+  }).join('')+'</tr>').join(''):`<tr><td colspan="${cols.length}"><div class="empty">No rows</div></td></tr>`;
+  t+='</tbody></table></div>';
+  t+=(rows.length>lim?`<p class="note" style="margin-top:6px">Showing first ${lim.toLocaleString()} of ${rows.length.toLocaleString()}; Excel export includes all.</p>`:'');
+  t+=`<button class="xls" style="margin-top:10px" onclick='__EXP["${exportName}"]()'>⬇ Excel</button>`;
+  return t;
+}
+// Turns an array of {name, indents, litres, rs, _rows} aggregate rows (one per vehicle / driver / location /
+// bunk / issuer / category …) into a compact ranked table where every cell — the name AND every number — is
+// clickable, opening a modal with the complete detailed indent rows (_rows) behind that aggregate.
+function dsAggTable(aggRows,nameHeader,exportId){
+  const cols=[{h:nameHeader,k:'name'},{h:'Indents',k:'indents',r:1},{h:'Litres',k:'litres',r:1,f:v=>nfmt(v)},{h:'₹',k:'rs',r:1,f:v=>money(v)}];
+  window.__EXP[exportId]=()=>xlsx(exportId,aggRows,cols);
+  let t=`<div class="tbl-wrap" style="margin-top:2px;max-height:380px"><table><thead><tr><th>${nameHeader}</th><th class="r">Indents</th><th class="r">Litres</th><th class="r">₹</th></tr></thead><tbody>`;
+  t+=aggRows.length?aggRows.map((r,i)=>{
+    const key=exportId+'_r'+i,title=`${nameHeader}: ${r.name||'(blank)'}`;
+    const link=v=>dsClickSpan(v,key,title,r._rows);
+    return`<tr><td>${link(r.name||'(blank)')}</td><td class="r">${link(r.indents.toLocaleString())}</td><td class="r">${link(nfmt(r.litres)+' L')}</td><td class="r">${link(money(r.rs))}</td></tr>`;
+  }).join(''):`<tr><td colspan="4"><div class="empty">No rows</div></td></tr>`;
+  t+='</tbody></table></div>';
+  t+=`<button class="xls" style="margin-top:10px" onclick='__EXP["${exportId}"]()'>⬇ Excel</button>`;
+  return t;
+}
+// ---- explainGroup() / explainRanking(): shown instead of a raw table whenever a +/- item is expanded ----
+// Rather than dumping every row of a group straight onto the page, expanding a +/- item now reveals a short,
+// dynamically-computed explanatory sentence about that group — how many records, the date span, the biggest
+// contributing vehicle/location, any reasons on file — with every value inside it individually clickable.
+// Nothing (no table) renders until you click one of those values or the "view the full list" link, at which
+// point a MODAL opens with the exact matching rows. Closing the modal returns you to the same +/- item you
+// were on, since the page underneath is never rebuilt. `cols` is the modal's column set, `idPrefix` must be
+// unique per call so re-rendering doesn't collide handlers, and `markFn` is whichever active-highlight scoping
+// function the caller uses (markNarrActive for the original cancellation accordion, dsMarkActive for the new
+// Detailed Summary section) — both are supported so this one helper works everywhere in the file.
+function explainGroup(items,cols,idPrefix,markFn){
+  const mark=markFn||markNarrActive;
+  const cSpan=(text,key,title,matches)=>{
+    window.__NARRCLICK[key]=el=>{mark(el);drilldown(title,matches,cols);};
+    return`<span class="narr-link" onclick='event.stopPropagation();event.preventDefault();__NARRCLICK["${key}"](this)'>${text}</span>`;
+  };
+  const cnt=items.length;
+  if(!cnt)return'<p class="mut" style="margin:8px 0 0">No records.</p>';
+  const withDates=[...items].filter(o=>o.d).sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
+  const first=withDates[0],last=withDates[withDates.length-1];
+  const litres=sum(items,o=>o.HSD),value=sum(items,o=>o.HSDAmount)+sum(items,o=>o.Cash);
+  const vehM=by(items.filter(o=>o.vk),'vk'),vehTop=[...vehM.entries()].sort((a,b)=>b[1].length-a[1].length)[0];
+  const locM=by(items.filter(o=>o.Location),'Location'),locTop=[...locM.entries()].sort((a,b)=>b[1].length-a[1].length)[0];
+  const reasons=[...new Set(items.filter(o=>o.Remarks&&o.Remarks.trim()).map(o=>o.Remarks.trim()))];
+
+  let seg=`This covers `+cSpan(`<b>${cnt.toLocaleString()}</b>`,idPrefix+'_cnt',`All ${cnt.toLocaleString()} matching records`,items)+` record${cnt===1?'':'s'}`;
+  if(first&&last){
+    seg+=first.d===last.d
+      ?` on `+cSpan(`<b>${first.d}</b>`,idPrefix+'_d',`Records on ${first.d}`,items.filter(o=>o.d===first.d))
+      :` between `+cSpan(`<b>${first.d}</b>`,idPrefix+'_d1',`Records on ${first.d}`,items.filter(o=>o.d===first.d))+` and `+cSpan(`<b>${last.d}</b>`,idPrefix+'_d2',`Records on ${last.d}`,items.filter(o=>o.d===last.d));
+  }
+  seg+=`, totalling `+cSpan(`<b>${nfmt(litres)} L</b>`,idPrefix+'_l',`All ${cnt.toLocaleString()} matching records`,items)+` (`+cSpan(`<b>${money(value)}</b>`,idPrefix+'_v',`All ${cnt.toLocaleString()} matching records`,items)+`).`;
+  if(vehTop&&vehTop[1].length)seg+=` The vehicle most involved was `+cSpan(`<b>${vehTop[0]}</b>`,idPrefix+'_veh',`Vehicle: ${vehTop[0]}`,vehTop[1])+` (${vehTop[1].length} record${vehTop[1].length===1?'':'s'}).`;
+  if(locTop&&locTop[1].length&&(!vehTop||locTop[0]!==vehTop[0]))seg+=` The location with the most activity was `+cSpan(`<b>${locTop[0]}</b>`,idPrefix+'_loc',`Location: ${locTop[0]}`,locTop[1])+` (${locTop[1].length} record${locTop[1].length===1?'':'s'}).`;
+  if(reasons.length)seg+=` Reason${reasons.length===1?'':'s'} noted: ${reasons.slice(0,3).map(r=>r.replace(/</g,'&lt;')).join('; ')}${reasons.length>3?', …':''}.`;
+  seg+=' '+cSpan(`You can view the complete list of these ${cnt.toLocaleString()} record${cnt===1?'':'s'} here.`,idPrefix+'_all',`All ${cnt.toLocaleString()} matching records`,items);
+  return`<p style="margin:4px 0 0">${seg}</p>`;
+}
+// Same idea as explainGroup(), but for a top-level finding whose body would otherwise be a *ranking* across
+// many entities (every vehicle, every driver, every location…) rather than one group's own records — names
+// the top few by litres inline, each clickable, plus a "view the full ranking" link that opens a modal with
+// every underlying record across the whole ranking.
+function explainRanking(aggRows,nameHeader,idPrefix,cols,markFn){
+  const mark=markFn||markNarrActive;
+  if(!aggRows.length)return'<p class="mut" style="margin:8px 0 0">No records.</p>';
+  const cSpan=(text,key,title,matches)=>{
+    window.__NARRCLICK[key]=el=>{mark(el);drilldown(title,matches,cols);};
+    return`<span class="narr-link" onclick='event.stopPropagation();event.preventDefault();__NARRCLICK["${key}"](this)'>${text}</span>`;
+  };
+  const top3=aggRows.slice(0,3),totalN=aggRows.length,nLow=nameHeader.toLowerCase();
+  let seg=`Ranked by litres, the top ${nLow}${top3.length>1?'s are':' is'} `+
+    top3.map((r,i)=>cSpan(`<b>${r.name||'(blank)'}</b> (${nfmt(r.litres)} L, ${r.indents} indent${r.indents===1?'':'s'})`,idPrefix+'_r'+i,`${nameHeader}: ${r.name||'(blank)'}`,r._rows)).join(', ')+
+    ` — out of ${totalN.toLocaleString()} ${nLow}${totalN===1?'':'s'} in this range.`;
+  const allRows=aggRows.flatMap(r=>r._rows);
+  seg+=' '+cSpan(`You can view the complete ranking, with every underlying record, here.`,idPrefix+'_all',`All ${nameHeader} records`,allRows);
+  return`<p style="margin:4px 0 0">${seg}</p>`;
+}
+// Same idea as the file's existing accordionGroups(), but using dsDetailCols/dsMarkActive so this section's
+// groups get a modal title built from fieldLabel and scoped highlighting, independent of the existing
+// cancellation accordion elsewhere in the file.
+function dsAccordionGroups(pool,keyFn,sentenceFn,exportPrefix,fieldLabel){
+  const kf=typeof keyFn==='function'?keyFn:o=>o[keyFn];
+  const filtered=pool.filter(o=>{const v=kf(o);return v!=null&&String(v).trim()!=='';});
+  if(!filtered.length)return'<p class="mut" style="margin:8px 0 0">No matching indents with this detail recorded.</p>';
+  const grouped=by(filtered,kf);
+  const cols=dsDetailCols();
+  const rows=[...grouped.entries()].map(([kk,a])=>({key:kk,cnt:a.length,items:[...a].sort((x,y)=>x.d<y.d?1:x.d>y.d?-1:0)})).sort((x,y)=>y.cnt-x.cnt||String(x.key).localeCompare(String(y.key)));
+  return rows.map((r,i)=>{
+    const gid=exportPrefix+'_g'+i;
+    window.__NARRCLICK[gid]=el=>{dsMarkActive(el);drilldown(`${fieldLabel}: ${r.key}`,r.items,cols);};
+    const clickAttr=`event.stopPropagation();event.preventDefault();__NARRCLICK["${gid}"](this)`;
+    const keySpan=`<span class="narr-link" onclick='${clickAttr}'>${r.key}</span>`;
+    const cntSpan=`<span class="narr-link" onclick='${clickAttr}'>${r.cnt}</span>`;
+    return`<details class="acc-item"><summary class="acc-sum"><span class="acc-ic"></span>${sentenceFn(keySpan,cntSpan,r.cnt)}</summary>
+      <div class="acc-body">${explainGroup(r.items,cols,exportPrefix+'_t'+i,dsMarkActive)}</div></details>`;
+  }).join('');
+}
+/* Builds the fully-dynamic "Detailed Summary — Plain English" list appended below the existing Summary tab.
+   Every finding is its own individually expandable +/- item: the always-visible line is a complete, plain
+   sentence (never a bare label or number), every important value inside that sentence is individually
+   clickable and opens a modal with the exact matching Diesel rows (Indent Number, Date, Vehicle, Driver,
+   Location, Bunk, Issued By, Cancelled By, Reason, Diesel Quantity — see dsDetailCols above), and expanding
+   the item with + reveals a full ranked/detail table behind it. Nothing here is fixed sample data — every
+   name, number, date and place comes from the loaded activeRows/cancRows at render time, so the whole list
+   changes automatically whenever a different range or a different Diesel API/Excel dataset is loaded.
+   Order: overall quantity → vehicle → driver → location/bunk → Issued By → HSD/category & unusual values →
+   cancellations last (cancellation data can be large). */
+function detailedSummarySection(activeRows,cancRows){
+  if(!activeRows.length&&!cancRows.length)return'<p class="mut">No diesel data loaded for this range.</p>';
+  const items=[];
+  const grp=(pool,field)=>{const f=by(pool.filter(o=>o[field]&&String(o[field]).trim()!==''),field);
+    return[...f.entries()].map(([kk,a])=>({name:kk,litres:sum(a,o=>o.HSD),indents:a.length,rs:sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash),_rows:a}));};
+
+  // 1) overall quantity — the headline numbers, expands to every active indent in range
+  const totalLitres=sum(activeRows,o=>o.HSD),totalIndents=activeRows.length,totalValue=sum(activeRows,o=>o.HSDAmount)+sum(activeRows,o=>o.Cash);
+  if(totalIndents){
+    const allTitle='All active diesel indents in range';
+    const sentence=`Over the loaded date range, the fleet drew a total of `+
+      dsClickSpan(`<b>${nfmt(totalLitres)} litres</b>`,'ds_qty_l',allTitle,activeRows)+` of diesel across `+
+      dsClickSpan(`<b>${totalIndents.toLocaleString()}</b>`,'ds_qty_n',allTitle,activeRows)+` active indents worth `+
+      dsClickSpan(`<b>${money(totalValue)}</b>`,'ds_qty_v',allTitle,activeRows)+
+      `, averaging <b>${nfmt(totalLitres/totalIndents)} L</b> per indent.`;
+    items.push(dsSentenceAccordion(sentence,explainGroup(activeRows,dsDetailCols(),'ds_qty',dsMarkActive)));
+  }
+
+  // 2) vehicle findings — highest / lowest usage, expands to every vehicle ranked by litres
+  const vehRows=grp(activeRows,'vk');
+  if(vehRows.length){
+    const byLitresDesc=[...vehRows].sort((a,b)=>b.litres-a.litres);
+    const top=byLitresDesc[0],low=byLitresDesc[byLitresDesc.length-1];
+    let seg=`The vehicle with the highest diesel usage was `+
+      dsClickSpan(`<b>${top.name}</b>`,'ds_veh_top','Vehicle: '+top.name,top._rows)+`, drawing `+
+      dsClickSpan(`<b>${nfmt(top.litres)} L</b>`,'ds_veh_topl','Vehicle: '+top.name,top._rows)+
+      ` across ${top.indents} indent${top.indents===1?'':'s'}`;
+    if(vehRows.length>1&&low.name!==top.name)seg+=`, while `+
+      dsClickSpan(`<b>${low.name}</b>`,'ds_veh_low','Vehicle: '+low.name,low._rows)+` had the lowest usage among active vehicles at `+
+      dsClickSpan(`<b>${nfmt(low.litres)} L</b>`,'ds_veh_lowl','Vehicle: '+low.name,low._rows);
+    items.push(dsSentenceAccordion(seg+'.',explainRanking(byLitresDesc,'Vehicle','ds_veh_tbl',dsDetailCols(),dsMarkActive)));
+  }
+
+  // driver findings — expands to every driver ranked by litres
+  const drvRows=grp(activeRows,'Driver');
+  if(drvRows.length){
+    const byLitresDesc=[...drvRows].sort((a,b)=>b.litres-a.litres);
+    const top=byLitresDesc[0];
+    let seg=`Among drivers, `+dsClickSpan(`<b>${top.name}</b>`,'ds_drv_top','Driver: '+top.name,top._rows)+
+      ` was linked to the most diesel drawn — `+dsClickSpan(`<b>${nfmt(top.litres)} L</b>`,'ds_drv_topl','Driver: '+top.name,top._rows)+
+      ` over ${top.indents} indent${top.indents===1?'':'s'}`;
+    if(drvRows.length>1){const low=byLitresDesc[byLitresDesc.length-1];if(low.name!==top.name)seg+=`, compared with `+
+      dsClickSpan(`<b>${low.name}</b>`,'ds_drv_low','Driver: '+low.name,low._rows)+` at the low end with `+
+      dsClickSpan(`<b>${nfmt(low.litres)} L</b>`,'ds_drv_lowl','Driver: '+low.name,low._rows);}
+    items.push(dsSentenceAccordion(seg+'.',explainRanking(byLitresDesc,'Driver','ds_drv_tbl',dsDetailCols(),dsMarkActive)));
+  }
+
+  // 3) location / bunk findings — each expands to every location/bunk ranked by litres
+  const locRows=grp(activeRows,'Location');
+  if(locRows.length){
+    const byLitresDesc=[...locRows].sort((a,b)=>b.litres-a.litres);
+    const top=byLitresDesc[0];
+    const share=totalLitres?Math.round(1000*top.litres/totalLitres)/10:0;
+    let seg=`By location, `+dsClickSpan(`<b>${top.name}</b>`,'ds_loc_top','Location: '+top.name,top._rows)+
+      ` recorded the highest diesel draw at `+dsClickSpan(`<b>${nfmt(top.litres)} L</b>`,'ds_loc_topl','Location: '+top.name,top._rows)+
+      ` (~${share}% of total usage)`;
+    if(locRows.length>1){const low=byLitresDesc[byLitresDesc.length-1];if(low.name!==top.name)seg+=`, whereas `+
+      dsClickSpan(`<b>${low.name}</b>`,'ds_loc_low','Location: '+low.name,low._rows)+` saw the least at `+
+      dsClickSpan(`<b>${nfmt(low.litres)} L</b>`,'ds_loc_lowl','Location: '+low.name,low._rows);}
+    items.push(dsSentenceAccordion(seg+'.',explainRanking(byLitresDesc,'Location','ds_loc_tbl',dsDetailCols(),dsMarkActive)));
+  }
+  const bunkRows=grp(activeRows,'Bunk');
+  if(bunkRows.length){
+    const byLitresDesc=[...bunkRows].sort((a,b)=>b.litres-a.litres);
+    const top=byLitresDesc[0];
+    const seg=`The busiest fuel bunk was `+dsClickSpan(`<b>${top.name}</b>`,'ds_bunk_top','Bunk: '+top.name,top._rows)+
+      `, supplying `+dsClickSpan(`<b>${nfmt(top.litres)} L</b>`,'ds_bunk_topl','Bunk: '+top.name,top._rows)+
+      ` across ${top.indents} indent${top.indents===1?'':'s'}${bunkRows.length>1?` out of ${bunkRows.length} bunks used in this range`:''}.`;
+    items.push(dsSentenceAccordion(seg,explainRanking(byLitresDesc,'Bunk','ds_bunk_tbl',dsDetailCols(),dsMarkActive)));
+  }
+
+  // 4) Issued By findings (active indents — who issued the most) — expands to every issuer ranked by litres
+  const issRows=grp(activeRows,'IssuedBy');
+  if(issRows.length){
+    const byLitres=[...issRows].sort((a,b)=>b.litres-a.litres);
+    const byCount=[...issRows].sort((a,b)=>b.indents-a.indents);
+    const t=byLitres[0];
+    let seg=`On the Issued By side, `+dsClickSpan(`<b>${t.name}</b>`,'ds_iss_top','Issued By: '+t.name,t._rows)+
+      ` issued the most diesel overall at `+dsClickSpan(`<b>${nfmt(t.litres)} L</b>`,'ds_iss_topl','Issued By: '+t.name,t._rows)+
+      ` across ${t.indents} indent${t.indents===1?'':'s'}`;
+    if(byCount[0].name!==t.name)seg+=`, while `+dsClickSpan(`<b>${byCount[0].name}</b>`,'ds_iss_cnt','Issued By: '+byCount[0].name,byCount[0]._rows)+
+      ` raised the most indents by count at `+dsClickSpan(`<b>${byCount[0].indents}</b>`,'ds_iss_cntn','Issued By: '+byCount[0].name,byCount[0]._rows);
+    items.push(dsSentenceAccordion(seg+'.',explainRanking(byLitres,'Issued By','ds_iss_tbl',dsDetailCols(),dsMarkActive)));
+  }
+
+  // 5) HSD / vehicle-category findings — expands to every category ranked by litres
+  const cm=by(activeRows,o=>dieselCat(o.VehicleType));
+  const catRows=[...cm.entries()].map(([kk,a])=>({name:kk,litres:sum(a,o=>o.HSD),indents:a.length,rs:sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash),_rows:a})).sort((a,b)=>b.litres-a.litres);
+  if(catRows.length){
+    const top=catRows[0],share=totalLitres?Math.round(1000*top.litres/totalLitres)/10:0;
+    const seg=`By vehicle category, `+dsClickSpan(`<b>${top.name}</b>`,'ds_cat_top','Vehicle category: '+top.name,top._rows)+
+      ` accounted for the largest share of diesel at `+dsClickSpan(`<b>${nfmt(top.litres)} L</b>`,'ds_cat_topl','Vehicle category: '+top.name,top._rows)+
+      ` (~${share}% of the total).`;
+    items.push(dsSentenceAccordion(seg,explainRanking(catRows,'Vehicle category','ds_cat_tbl',dsDetailCols(),dsMarkActive)));
+  }
+
+  // unusual value — the single largest fill, expands to the top 15 largest fills in range
+  if(activeRows.length){
+    const byFillDesc=[...activeRows].sort((a,b)=>b.HSD-a.HSD);
+    const maxFill=byFillDesc[0];
+    const avgL=totalIndents?totalLitres/totalIndents:0;
+    if(maxFill&&maxFill.HSD>0){
+      const mTitle='Indent — '+(maxFill.IndentNo||maxFill.IndentID||maxFill.vk||'largest fill');
+      let seg=`The single largest diesel fill recorded was `+
+        dsClickSpan(`<b>${nfmt(maxFill.HSD)} L</b>`,'ds_max_l',mTitle,[maxFill])+` for vehicle `+
+        dsClickSpan(`<b>${maxFill.vk||'(unknown)'}</b>`,'ds_max_v',mTitle,[maxFill])+` on `+
+        dsClickSpan(`<b>${maxFill.d||'an unrecorded date'}</b>`,'ds_max_d',mTitle,[maxFill])+` at `+
+        dsClickSpan(`<b>${maxFill.Location||'an unrecorded location'}</b>`,'ds_max_loc',mTitle,[maxFill]);
+      if(avgL>0&&maxFill.HSD>avgL*3)seg+=`, well above the ${nfmt(avgL)} L average per indent`;
+      items.push(dsSentenceAccordion(seg+'.',explainGroup(byFillDesc.slice(0,15),dsDetailCols(),'ds_max',dsMarkActive)));
+    }
+  }
+
+  // 6) cancellations — last, since cancellation data can be large. One outer +/- item with the headline
+  //    sentence; expanding it reveals every relevant grouping (Issued By, location, vehicle, bunk, vehicle/HSD
+  //    category), each its own nested set of +/- rows — dsAccordionGroups() is generic, so this works
+  //    automatically for whatever groups exist in the data, not just Issued By.
+  if(cancRows.length){
+    const cancLitres=sum(cancRows,o=>o.HSD),cancValue=sum(cancRows,o=>o.HSDAmount)+sum(cancRows,o=>o.Cash);
+    const withTat=cancRows.map(o=>({...o,tatR:(o.issueDT&&o.cancelDT)?Math.round(10*(new Date(o.cancelDT)-new Date(o.issueDT))/36e5)/10:null}));
+    const byUser=[...by(withTat,o=>o.cancelBy||'(unspecified)').entries()].map(([nm,a])=>({nm:nm||'(unspecified)',cnt:a.length,_rows:a})).sort((a,b)=>b.cnt-a.cnt);
+    const topUser=byUser[0];
+    const seg=`On cancellations, `+dsClickSpan(`<b>${cancRows.length}</b>`,'ds_canc_n','All cancelled indents',withTat)+
+      ` indent${cancRows.length===1?' was':'s were'} cancelled in this range, representing `+
+      dsClickSpan(`<b>${nfmt(cancLitres)} L</b>`,'ds_canc_l','All cancelled indents',withTat)+` and `+
+      dsClickSpan(`<b>${money(cancValue)}</b>`,'ds_canc_v','All cancelled indents',withTat)+
+      ` that did not convert into fuel drawn — `+
+      dsClickSpan(`<b>${topUser.nm}</b>`,'ds_canc_top','Cancelled by: '+topUser.nm,topUser._rows)+
+      ` was responsible for the most, with `+
+      dsClickSpan(`<b>${topUser.cnt}</b>`,'ds_canc_topn','Cancelled by: '+topUser.nm,topUser._rows)+
+      ` cancelled indent${topUser.cnt===1?'':'s'}. Expand this item, then use + on any group below to see the indents behind it, and − to hide them again.`;
+
+    const dims=[
+      ['By Issued By',o=>o.cancelBy||'(unspecified)',(ks,cs,n)=>`${ks} cancelled ${cs} indent${n===1?'':'s'} during the selected period.`,'ds_accIss','Issued By'],
+      ['By location',o=>o.Location,(ks,cs,n)=>`${cs} indent${n===1?'':'s'} were cancelled at ${ks} during the selected period.`,'ds_accLoc','Location'],
+      ['By vehicle',o=>o.vk,(ks,cs,n)=>`${cs} indent${n===1?'':'s'} were cancelled for vehicle ${ks} during the selected period.`,'ds_accVeh','Vehicle'],
+      ['By bunk',o=>o.Bunk,(ks,cs,n)=>`${cs} indent${n===1?'':'s'} were cancelled at bunk ${ks} during the selected period.`,'ds_accBunk','Bunk'],
+      ['By vehicle / HSD category',o=>dieselCat(o.VehicleType),(ks,cs,n)=>`${cs} indent${n===1?'':'s'} were cancelled among ${ks} vehicles during the selected period.`,'ds_accCat','Vehicle category'],
+    ];
+    const cancBlock=dims.map(([label,keyFn,sentenceFn,pfx,fieldLabel])=>
+      `<div style="margin-top:20px"><h4 style="margin:0 0 8px;font-size:18px;color:var(--txt2);font-weight:600">${label}</h4>${dsAccordionGroups(withTat,keyFn,sentenceFn,pfx,fieldLabel)}</div>`
+    ).join('');
+    items.push(dsSentenceAccordion(seg,cancBlock));
+  }else{
+    items.push('<div class="acc-item" style="padding:13px 16px;font-size:18px;color:var(--txt2)">No indents were cancelled in this range.</div>');
+  }
+
+  return `<div class="acc-list">${items.join('')}</div>`;
+}
+
+/* ============ MODAL ============ */
+const MODAL=document.getElementById('modal');
+function drilldown(title,rows,cols,filterFn){
+  document.getElementById('modalTitle').textContent=title;
+  let h=`<table><thead><tr>`+cols.map(c=>`<th class="${c.r?'r':''}">${c.h}</th>`).join('')+`</tr></thead><tbody>`;
+  h+=rows.slice(0,2000).map(r=>'<tr>'+cols.map(c=>`<td class="${c.r?'r':''}">${c.f?c.f(r[c.k],r):(r[c.k]??'')}</td>`).join('')+'</tr>').join('');
+  h+='</tbody></table>'+(rows.length>2000?`<p class="note">Showing 2,000 of ${rows.length.toLocaleString()}; Excel has all.</p>`:'');
+  document.getElementById('modalBody').innerHTML=rows.length?h:'<div class="empty">No rows</div>';
+  document.getElementById('modalXls').onclick=()=>xlsx('drilldown_'+title.replace(/[^a-z0-9]+/gi,'_').slice(0,22),rows,cols);
+  const fb=document.getElementById('modalFilter');fb.style.display=filterFn?'':'none';fb.onclick=()=>{filterFn();MODAL.style.display='none';};
+  MODAL.style.display='flex';
+}
+document.getElementById('modalX').onclick=()=>MODAL.style.display='none';
+MODAL.onclick=e=>{if(e.target===MODAL)MODAL.style.display='none';};
+
+/* ============ CHECKBOX MULTISELECT ============ */
+const MS={};  // id -> {selected:Set, options:[]}
+function msHTML(id,label,options){
+  return `<div class="fg"><label class="fl">${label}</label>
+  <div class="ms" id="${id}">
+    <div class="ms-btn"><span class="ms-lbl">All</span><span class="cnt zero">0</span><span class="arw">▾</span></div>
+    <div class="ms-panel">
+      <input class="ms-search" placeholder="Search…">
+      <div class="ms-tools"><a data-act="all">Select all</a><a data-act="none">Clear</a></div>
+      <div class="ms-list">${options.map((o,i)=>`<label class="ms-opt"><input type="checkbox" value="${String(o).replace(/"/g,'&quot;')}"><span>${o||'(blank)'}</span></label>`).join('')}</div>
+    </div>
+  </div></div>`;
+}
+function msInit(id){
+  const el=document.getElementById(id);if(!el)return;
+  MS[id]={selected:new Set()};
+  const btn=el.querySelector('.ms-btn'),panel=el.querySelector('.ms-panel'),lbl=el.querySelector('.ms-lbl'),cnt=el.querySelector('.cnt');
+  const boxes=[...el.querySelectorAll('.ms-opt input')];
+  const refresh=()=>{const sel=boxes.filter(b=>b.checked).map(b=>b.value);MS[id].selected=new Set(sel);
+    cnt.textContent=sel.length;cnt.classList.toggle('zero',sel.length===0);
+    lbl.textContent=sel.length===0?'All':sel.length===1?sel[0]:sel.length+' selected';};
+  btn.onclick=e=>{e.stopPropagation();document.querySelectorAll('.ms.open').forEach(o=>{if(o!==el)o.classList.remove('open');});el.classList.toggle('open');};
+  panel.onclick=e=>e.stopPropagation();
+  boxes.forEach(b=>b.onchange=refresh);
+  el.querySelector('.ms-search').oninput=e=>{const q=e.target.value.toLowerCase();el.querySelectorAll('.ms-opt').forEach(o=>o.classList.toggle('hide',!o.textContent.toLowerCase().includes(q)));};
+  el.querySelectorAll('.ms-tools a').forEach(a=>a.onclick=()=>{const act=a.dataset.act;boxes.forEach(b=>{if(!b.closest('.ms-opt').classList.contains('hide'))b.checked=(act==='all');});refresh();});
+  refresh();
+}
+function msVals(id){return MS[id]?[...MS[id].selected]:[];}
+function msClear(id){const el=document.getElementById(id);if(!el)return;
+  el.querySelectorAll('.ms-opt input').forEach(b=>b.checked=false);
+  el.querySelectorAll('.ms-opt').forEach(o=>o.classList.remove('hide'));
+  const s=el.querySelector('.ms-search');if(s)s.value='';
+  MS[id].selected=new Set();
+  const btn=el.querySelector('.ms-btn');
+  btn.querySelector('.ms-lbl').textContent='All';
+  const cnt=btn.querySelector('.cnt');cnt.textContent='0';cnt.classList.add('zero');}
+document.addEventListener('click',()=>document.querySelectorAll('.ms.open').forEach(o=>o.classList.remove('open')));
+
+/* Column sets */
+const SHIPCOLS=[{h:'Date',k:'d'},{h:'Vehicle',k:'vk'},{h:'Type',k:'VehicleType'},{h:'Shipment',k:'ShipmentType'},{h:'Net t',k:'NtWt',r:1,f:v=>nfmt(v)},{h:'Location',k:'Location'},{h:'Unload',k:'Unload'},{h:'Driver',k:'Driver'}];
+const DSLCOLS=[{h:'Date',k:'d'},{h:'Indent',k:'IndentNo'},{h:'Vehicle',k:'vk'},{h:'Type',k:'VehicleType'},{h:'Litres',k:'HSD',r:1},{h:'₹Amt',k:'HSDAmount',r:1},{h:'Cash',k:'Cash',r:1},{h:'Bunk',k:'Bunk'},{h:'Location',k:'Location'},{h:'IssuedBy',k:'IssuedBy'},{h:'Driver',k:'Driver'},{h:'Own?',k:'isBT',f:v=>v?'<span class="tag t-grn">BT</span>':'<span class="tag t-amb">Other</span>'},{h:'Cancelled',k:'canc',f:v=>v?'<span class="tag t-red">Yes</span>':''}];
+// Column set headed with the ACTUAL Diesel API field names (not the friendly labels DSLCOLS uses), so the
+// indent-level tables on A1 · By Can, A2 · Car & LMV, A3 · Cranes HSD and 5 · OST Pending can be checked
+// against the raw API payload directly — every header below is the literal field ingest() reads it from
+// (see the DSL-row build in ingest()): r.IndentNo, r.Date, r.VehicleNo, r.VehicleType, r.HSD, r.HSDAmount,
+// r.Cash, r.Bunk, r.Location, r.IssuedBy, r.Driver, r.Cancel, r.IssueDateTime, r.IndentCanceledDt, r.Remarks.
+const RAWDSLCOLS=[{h:'IndentNo',k:'IndentNo'},{h:'Date',k:'d'},{h:'VehicleNo',k:'vk'},{h:'VehicleType',k:'VehicleType'},{h:'HSD',k:'HSD',r:1},{h:'HSDAmount',k:'HSDAmount',r:1},{h:'Cash',k:'Cash',r:1},{h:'Bunk',k:'Bunk'},{h:'Location',k:'Location'},{h:'IssuedBy',k:'IssuedBy'},{h:'Driver',k:'Driver'},{h:'Cancel',k:'canc',f:v=>v?'1':'0'},{h:'IssueDateTime',k:'issueDT'},{h:'IndentCanceledDt',k:'cancelDT'},{h:'Remarks',k:'Remarks'}];
+const phead=(t,s)=>`<div class="phead"><h2>${t}</h2></div><p class="psub">${s}</p>`;
+
+/* ============ RAW FIELD INVENTORY (for verifying the OST/outstanding column choice) ============
+   The curated DSL row only ever pulls a fixed, named set of fields out of each raw Diesel API record
+   (IndentNo, HSD, HSDAmount, Cash, Bunk, Location, IssuedBy, Driver, Cancel, dates, Remarks — see ingest()).
+   Every OTHER field the API actually returned is still sitting untouched on that row's _raw object. This scans
+   every _raw record currently loaded and reports EVERY distinct field name the API sent, how often each one
+   is actually populated, and real sample values pulled straight from your data — so instead of guessing
+   whether "₹Amt − Cash" is the right definition of outstanding/OST, you (or I) can look at the real field list
+   and see if there's something more direct (a payment-status flag, a due/balance amount, a bill number) that
+   should be used instead. Fields whose name suggests payment/outstanding status are flagged for a quick look. */
+function rawFieldInventory(pool){
+  const fieldMap=new Map();
+  for(const o of pool){
+    const raw=o._raw;if(!raw)continue;
+    for(const k in raw){
+      const v=raw[k];
+      if(!fieldMap.has(k))fieldMap.set(k,{nonBlank:0,samples:[],rows:[]});
+      const rec=fieldMap.get(k);
+      if(v!=null&&String(v).trim()!==''){
+        rec.nonBlank++;
+        const sv=String(v);if(rec.samples.length<4&&!rec.samples.includes(sv))rec.samples.push(sv);
+        if(rec.rows.length<500)rec.rows.push(o);
+      }
+    }
+  }
+  const suspect=['ost','due','pend','paid','pay','bill','credit','balance','outstand','settle','status'];
+  return[...fieldMap.entries()].map(([k,v])=>({
+    field:k,nonBlank:v.nonBlank,
+    pct:pool.length?Math.round(1000*v.nonBlank/pool.length)/10:0,
+    samples:v.samples.join(' · ')||'—',
+    flagged:suspect.some(s=>k.toLowerCase().includes(s)),
+    _rows:v.rows
+  })).sort((a,b)=>(b.flagged-a.flagged)||(b.nonBlank-a.nonBlank));
+}
+function fieldInventoryHtml(pool,exportId){
+  const inv=rawFieldInventory(pool);
+  const cols=[{h:'Raw API field',k:'field'},{h:'% of indents populated',k:'pct',r:1,f:v=>v+'%'},{h:'# populated',k:'nonBlank',r:1},{h:'Sample values from your data',k:'samples'}];
+  window.__EXP[exportId]=()=>xlsx(exportId,inv,cols);
+  let t=`<div class="tbl-wrap" style="max-height:420px"><table><thead><tr>`+cols.map(c=>`<th class="${c.r?'r':''}">${c.h}</th>`).join('')+'</tr></thead><tbody>';
+  t+=inv.length?inv.map((r,i)=>{
+    const key='fieldinv_'+exportId+'_'+i;
+    window.__NARRCLICK[key]=el=>{markNarrActive(el);drilldown(`Indents where raw field "${r.field}" is populated (up to 500 shown)`,r._rows,DSLCOLS);};
+    const nameHtml=r.flagged?`<b style="color:var(--amb)">${r.field}</b> <span class="tag t-amb" style="font-size:11px">check this</span>`:r.field;
+    return`<tr${r.flagged?' style="background:#e3b34114"':''}><td><span class="narr-link" onclick='event.stopPropagation();__NARRCLICK["${key}"](this)'>${nameHtml}</span></td><td class="r">${r.pct}%</td><td class="r">${r.nonBlank.toLocaleString()}</td><td>${(r.samples||'').replace(/</g,'&lt;')}</td></tr>`;
+  }).join(''):`<tr><td colspan="4"><div class="empty">No raw records loaded</div></td></tr>`;
+  t+='</tbody></table></div>';
+  t+=`<button class="xls" style="margin-top:10px" onclick='__EXP["${exportId}"]()'>⬇ Excel</button>`;
+  return t;
+}
+
+const REPORTS={};
+
+/* SUMMARY — comparison uses BT only; diesel figure shows both */
+REPORTS.summary=()=>{
+  const litresAll=sum(fDslOk,o=>o.HSD),litresBT=sum(cDslOk,o=>o.HSD);
+  const fuelRs=sum(fDslOk,o=>o.HSDAmount)+sum(fDslOk,o=>o.Cash);
+  const shipVk=new Set(cShip.map(o=>o.vk)),dslVk=new Set(cDslOk.map(o=>o.vk));
+  const fns=[...dslVk].filter(v=>!shipVk.has(v)).length;
+  let under=0;for(const o of cShip){const lim=loadLimit(o.cls,o.ShipmentType);if(lim&&o.NtWt>0&&o.NtWt<lim)under++;}
+  const canc=fDsl.filter(o=>o.canc);
+  const k=[['blu',uniq(cShip,o=>o.vk),'BT vehicles run'],['blu',cShip.length.toLocaleString(),'Shipments'],
+    ['ok',nfmt(sum(cShip,o=>o.NtWt))+' t','Net tonnage'],['warn',Math.round(litresBT).toLocaleString()+' L','Diesel · BT fleet'],
+    ['warn',Math.round(litresAll).toLocaleString()+' L','Diesel · all transport'],['bad',fns,'Fuel-no-shipment (BT)'],
+    ['bad',under.toLocaleString(),'Under-loaded shipments'],['amb',canc.length,'Cancelled indents']];
+  let h=phead('Operations Summary',`Comparison metrics scoped to own BT fleet (${BTSET.size} vehicles in master). Diesel-only figures include all transport. Click any chart to drill into the underlying records.`);
+  h+=`<div class="kpis">${k.map(x=>`<div class="kpi ${x[0]}"><div class="n">${x[1]}</div><div class="l">${x[2]}</div></div>`).join('')}</div>`;
+  h+=`<div class="grid2"><div class="card"><h3>Shipments by vehicle type <span class="hint">click to drill</span></h3><canvas id="s_vt"></canvas></div>
+     <div class="card"><h3>Diesel litres by day — BT vs Other <span class="hint">click</span></h3><canvas id="s_di"></canvas></div></div>`;
+  h+=`<div class="grid2"><div class="card"><h3>Shipment type mix <span class="hint">click</span></h3><canvas id="s_ty"></canvas></div>
+     <div class="card"><h3>Daily active BT vehicles</h3><canvas id="s_ac"></canvas></div></div>`;
+
+  /* ---- Cancelled-indent detail: Issued By-wise — which indent, where, what went wrong, who's responsible ----
+     "cancelBy" is resolved per-row by whoCancelled() from the raw API record (see ingest()) — it prefers a
+     cancel-specific field if the record has one, then falls back to the issuer field, then '(unspecified)'.
+     Every row below also shows exactly which raw field it came from, and the raw record itself, so this can
+     be checked against the source data directly. */
+  const tatOf=o=>(o.issueDT&&o.cancelDT)?Math.round(10*(new Date(o.cancelDT)-new Date(o.issueDT))/36e5)/10:null;
+  const cancDetail=canc.map(o=>({...o,tatR:tatOf(o)})).sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:0);
+  const cancDetailCols=buildCancDetailCols();
+  const byUser=by(canc,o=>o.cancelBy||'(unspecified)');
+  const userRows=[...byUser.entries()].map(([uk,a])=>{
+    const locs=[...new Set(a.map(o=>o.Location||'(blank)'))];
+    const fields=[...new Set(a.map(o=>o.cancelByField||'none found'))];
+    return{user:uk||'(unspecified)',cnt:a.length,litres:Math.round(sum(a,o=>o.HSD)),rs:Math.round(sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash)),
+      locCount:locs.length,locs:locs.slice(0,4).join(', ')+(locs.length>4?' …':''),
+      fieldList:fields.join(', '),
+      _rows:a.map(o=>({...o,tatR:tatOf(o)}))};
+  }).sort((x,y)=>y.cnt-x.cnt);
+  const userCols=[
+    {h:'Issued By',k:'user'},
+    {h:'Cancelled',k:'cnt',r:1,f:v=>`<span class="tag t-red">${v}</span>`},
+    {h:'Litres',k:'litres',r:1,f:v=>v.toLocaleString()},
+    {h:'₹ Value',k:'rs',r:1,f:v=>money(v)},
+    {h:'# Locations',k:'locCount',r:1},
+    {h:'Where',k:'locs'},
+    {h:'Resolved from field',k:'fieldList'}
+  ];
+  h+=`<p class="note" style="margin:18px 0 0">Each cancelled indent's "Issued By" below is resolved from the raw Diesel API record — a cancel-specific field if the record has one (e.g. a "cancelled by" / "modified by" style field), otherwise the issuer field, otherwise "(unspecified)". The badge next to each name is the exact raw field name it came from; expand "view raw record" on any row to see every field the API returned for that indent and confirm it against your source data. "Reason" is the Remarks text captured on the indent, where one was logged.</p>`;
+  h+=`<div class="grid2"><div class="card"><h3>Cancelled indents by Issued By <span class="hint">click a bar</span></h3><canvas id="s_cu"></canvas></div>
+     <div class="card"><h3>Cancelled indents by location <span class="hint">click a bar</span></h3><canvas id="s_cl"></canvas></div></div>`;
+  h+=tableCard('Cancelled indents — by Issued By (who was responsible)',userRows,userCols,'summary_cancelled_by_user',r=>drilldown('Cancelled indents — '+r.user,r._rows,cancDetailCols));
+  h+=tableCard('All cancelled indents — indent, location &amp; reason',cancDetail,cancDetailCols,'summary_cancelled_all',r=>drilldown('Cancelled indent — '+r.IndentNo,[r],cancDetailCols));
+
+  return {html:h,after:()=>{
+    const vtM=by(cShip,'VehicleType'),vtK=[...vtM.keys()];
+    mkChart('s_vt',{type:'polarArea',data:{labels:vtK,datasets:[{data:vtK.map(k=>vtM.get(k).length),backgroundColor:vtK.map((_,i)=>alpha(PAL[i%PAL.length],.75)),borderColor:'#141b26',borderWidth:2}]},options:{plugins:{legend:{position:'right'}},scales:{r:{grid:{color:CH.grid},ticks:{backdropColor:'transparent',color:CH.mut}}}}},i=>drilldown('Shipments — '+vtK[i],vtM.get(vtK[i]),SHIPCOLS,()=>{F.vt=vtK[i];document.getElementById('vtf').value=vtK[i];render();}));
+    const days=[...new Set(fDslOk.map(o=>o.d))].sort();
+    const btByD=days.map(d=>sum(fDslOk.filter(o=>o.d===d&&o.isBT),o=>o.HSD));
+    const otByD=days.map(d=>sum(fDslOk.filter(o=>o.d===d&&!o.isBT),o=>o.HSD));
+    mkChart('s_di',{type:'line',data:{labels:days,datasets:[{label:'BT fleet',data:btByD,borderColor:CH.blu,backgroundColor:'rgba(79,156,255,.12)',fill:true,tension:.3,pointRadius:1},{label:'Other transport',data:otByD,borderColor:CH.amb,backgroundColor:'rgba(227,179,65,.10)',fill:true,tension:.3,pointRadius:1}]},options:{plugins:{legend:{labels:{boxWidth:12}}}}},i=>drilldown('Diesel — '+days[i],fDslOk.filter(o=>o.d===days[i]),DSLCOLS));
+    const tm=by(cShip,'ShipmentType'),tk=[...tm.keys()];
+    mkChart('s_ty',{type:'doughnut',data:{labels:tk,datasets:[{data:tk.map(k=>tm.get(k).length),backgroundColor:PAL,borderColor:'#141b26',borderWidth:2}]},options:{plugins:{legend:{position:'right'}}}},i=>drilldown('Shipments — '+tk[i],tm.get(tk[i]),SHIPCOLS));
+    const ad=by(cShip,'d'),ak=[...ad.keys()].sort();
+    mkChart('s_ac',{type:'line',data:{labels:ak,datasets:[{data:ak.map(x=>uniq(ad.get(x),o=>o.vk)),borderColor:CH.grn,backgroundColor:'rgba(78,196,110,.12)',fill:true,tension:.3,pointRadius:1}]},options:{plugins:{legend:{display:false}}}},i=>drilldown('Active on '+ak[i],ad.get(ak[i]),SHIPCOLS));
+
+    const cuTop=userRows.slice(0,12);
+    mkChart('s_cu',{type:'bar',data:{labels:cuTop.map(r=>r.user),datasets:[{label:'Cancelled',data:cuTop.map(r=>r.cnt),backgroundColor:alpha(CH.red,.85),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Cancelled indents — '+cuTop[i].user,cuTop[i]._rows,cancDetailCols));
+    const cLocM=by(canc,'Location');
+    const cLocRows=[...cLocM.entries()].map(([lk,a])=>({k:lk||'(blank)',cnt:a.length,_rows:a.map(o=>({...o,tatR:tatOf(o)}))})).sort((x,y)=>y.cnt-x.cnt).slice(0,12);
+    mkChart('s_cl',{type:'bar',data:{labels:cLocRows.map(r=>r.k),datasets:[{label:'Cancelled',data:cLocRows.map(r=>r.cnt),backgroundColor:alpha(CH.amb,.85),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Cancelled indents — '+cLocRows[i].k,cLocRows[i]._rows,cancDetailCols));
+  }};
+};
+
+/* 1 UNDER-UTILIZED (BT) */
+REPORTS.util=()=>{
+  const span=daysBetween(LOADED.from,LOADED.to),m=by(cShip,'vk');
+  let rows=[...m.entries()].map(([vk,a])=>{const days=uniq(a,o=>o.d);return{vk,VehicleType:a[0].VehicleType,trips:a.length,nt:Math.round(sum(a,o=>o.NtWt)*100)/100,active:days,idle:span-days,util:Math.round(1000*days/span)/10,_rows:a};}).sort((x,y)=>x.active-y.active);
+  const band=v=>v.active<=1?'Non-runner':v.util<25?'Severe':v.util<50?'Under':v.util<75?'Moderate':'Good';
+  rows.forEach(r=>r.band=band(r));const bc={};rows.forEach(r=>bc[r.band]=(bc[r.band]||0)+1);
+  const cols=[{h:'Vehicle',k:'vk'},{h:'Type',k:'VehicleType'},{h:'Trips',k:'trips',r:1},{h:'Active',k:'active',r:1},{h:'Idle',k:'idle',r:1},{h:'Net t',k:'nt',r:1},{h:'Util%',k:'util',r:1},{h:'Band',k:'band',f:v=>`<span class="tag ${v=='Non-runner'||v=='Severe'?'t-red':v=='Under'?'t-amb':'t-blu'}">${v}</span>`}];
+  let h=phead('1 · Vehicle Under-utilization',`Own BT fleet only · ${span}-day window. Band = share of days the vehicle ran at least one shipment.`);
+  h+=`<div class="grid2"><div class="card"><h3>Utilization bands <span class="hint">click</span></h3><canvas id="u_b"></canvas></div><div class="card"><h3>Avg active days by type</h3><canvas id="u_v"></canvas></div></div>`;
+  h+=tableCard('Vehicle utilization',rows,cols,'under_utilized',r=>drilldown('Shipments — '+r.vk,r._rows,SHIPCOLS));
+  return {html:h,after:()=>{const order=['Non-runner','Severe','Under','Moderate','Good'];
+    mkChart('u_b',{type:'doughnut',data:{labels:order,datasets:[{data:order.map(o=>bc[o]||0),backgroundColor:[CH.red,alpha(CH.red,.6),CH.amb,CH.blu,CH.grn],borderColor:'#141b26',borderWidth:2}]},options:{cutout:'52%',plugins:{legend:{position:'right'}}}},i=>{const b=order[i];drilldown('Vehicles — '+b,rows.filter(r=>r.band===b),cols);});
+    const vt=by(rows,'VehicleType'),lab=[...vt.keys()];
+    mkChart('u_v',{type:'radar',data:{labels:lab,datasets:[{label:'Avg active days',data:lab.map(l=>{const a=vt.get(l);return Math.round(10*sum(a,o=>o.active)/a.length)/10;}),backgroundColor:alpha(CH.teal,.25),borderColor:CH.teal,borderWidth:2,pointBackgroundColor:CH.teal,pointRadius:4}]},options:{plugins:{legend:{display:false}},scales:{r:{grid:{color:CH.grid},angleLines:{color:CH.grid},pointLabels:{font:{size:16}},ticks:{backdropColor:'transparent',color:CH.mut}}}}},i=>drilldown('Vehicles — '+lab[i],vt.get(lab[i]),cols));
+  }};
+};
+
+/* 2 UNDER-LOADED (BT) */
+REPORTS.underload=()=>{
+  const styps=[...new Set(cShip.map(o=>o.ShipmentType))].sort();
+  const sel=window.__ulType||'';
+  const build=styp=>{const rows=[];for(const o of cShip){if(styp&&o.ShipmentType!==styp)continue;const lim=loadLimit(o.cls,o.ShipmentType);if(!lim)continue;if(o.NtWt>0&&o.NtWt<lim)rows.push({vk:o.vk,VehicleType:o.VehicleType,ShipmentType:o.ShipmentType,NtWt:Math.round(o.NtWt*100)/100,lim,short:Math.round((lim-o.NtWt)*100)/100,d:o.d,Location:o.Location,Unload:o.Unload,Driver:o.Driver});}return rows.sort((a,b)=>b.short-a.short);};
+  const rows=build(sel);const agg=by(rows,'VehicleType');const byType=by(rows,'ShipmentType');
+  const cols=[{h:'Date',k:'d'},{h:'Vehicle',k:'vk'},{h:'Type',k:'VehicleType'},{h:'Shipment',k:'ShipmentType'},{h:'Net t',k:'NtWt',r:1},{h:'Allowed',k:'lim',r:1},{h:'Short',k:'short',r:1,f:v=>`<span class="tag t-amb">${v} t</span>`},{h:'Location',k:'Location'}];
+  let h=phead('2 · Under-loaded Shipments',`Own BT fleet · net weight below the allowed capacity for the vehicle type & shipment class.`);
+  h+=`<div class="card"><span class="pill">Rake &amp; Internal · 16W 45 · 18W 58 · 14W 40 · 12W 40 t</span><span class="pill">Others · 16W 40 · 18W 45 · 14W 30 · 12W 25 t</span></div>`;
+  h+=`<div class="filterbar"><div class="fg"><label class="fl">Shipment type</label><select id="ul_styp"><option value="">All shipment types</option>${styps.map(t=>`<option ${t===sel?'selected':''}>${t}</option>`).join('')}</select></div>
+     <span class="badge" id="ul_cnt">${rows.length.toLocaleString()} under-loaded · ${Math.round(sum(rows,o=>o.short)).toLocaleString()} t short</span></div>`;
+  h+=`<div class="grid2"><div class="card"><h3>Count by type <span class="hint">click</span></h3><canvas id="ul_c"></canvas></div><div class="card"><h3>Under-loaded by shipment type <span class="hint">click</span></h3><canvas id="ul_t"></canvas></div></div>`;
+  h+=`<div class="card"><h3>Short tonnage by vehicle type <span class="hint">click</span></h3><canvas id="ul_s"></canvas></div>`;
+  h+=tableCard('Under-loaded shipments',rows,cols,'under_loaded');
+  return {html:h,after:()=>{
+    document.getElementById('ul_styp').onchange=e=>{window.__ulType=e.target.value;render();};
+    const lab=[...agg.keys()];
+    mkChart('ul_c',{type:'pie',data:{labels:lab,datasets:[{data:lab.map(l=>agg.get(l).length),backgroundColor:lab.map((_,i)=>alpha(PAL[i%PAL.length],.8)),borderColor:'#141b26',borderWidth:2}]},options:{plugins:{legend:{position:'right'}}}},i=>drilldown('Under-loaded — '+lab[i],agg.get(lab[i]),cols));
+    const tl=[...byType.keys()];
+    mkChart('ul_t',{type:'doughnut',data:{labels:tl,datasets:[{data:tl.map(l=>byType.get(l).length),backgroundColor:tl.map((_,i)=>alpha(PAL[(i+2)%PAL.length],.8)),borderColor:'#141b26',borderWidth:2}]},options:{cutout:'50%',plugins:{legend:{position:'right'}}}},i=>drilldown('Under-loaded — '+tl[i],byType.get(tl[i]),cols));
+    mkChart('ul_s',{type:'bar',data:{labels:lab,datasets:[{label:'Short tonnes',data:lab.map(l=>Math.round(sum(agg.get(l),o=>o.short))),backgroundColor:lab.map(()=>alpha(CH.red,.85)),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Under-loaded — '+lab[i],agg.get(lab[i]),cols));
+  }};
+};
+
+/* 3 FUEL-NO-SHIP (BT comparison) */
+REPORTS.fuelnoship=()=>{
+  const shipVk=new Set(cShip.map(o=>o.vk));
+  const noShip=cDslOk.filter(o=>!shipVk.has(o.vk)&&isTruck(o));const dm=by(noShip,'vk');
+  let rows=[...dm.entries()].map(([vk,a])=>({vk,VehicleType:a[0].VehicleType,indents:a.length,litres:Math.round(sum(a,o=>o.HSD)),rs:Math.round(sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash)),_rows:a})).sort((x,y)=>y.litres-x.litres);
+  const grp=by(rows,'VehicleType');const gr=[...grp.entries()].map(([t,a])=>({VehicleType:t,vehicles:a.length,litres:sum(a,o=>o.litres),rs:sum(a,o=>o.rs),_rows:a.flatMap(x=>x._rows)})).sort((x,y)=>y.litres-x.litres);
+  const cols=[{h:'Vehicle',k:'vk'},{h:'Type',k:'VehicleType'},{h:'Indents',k:'indents',r:1},{h:'Litres',k:'litres',r:1,f:v=>v.toLocaleString()},{h:'₹',k:'rs',r:1,f:v=>money(v)}];
+  let h=phead('3 · Diesel Drawn but No Shipment',`Own BT trucks &amp; trailers (crane / coil / hydra / LCV excluded) that took diesel but ran no shipment in range — grouped by vehicle type.`);
+  h+=`<div class="card"><h3>Litres by type <span class="hint">click</span></h3><canvas id="fns"></canvas></div>`;
+  h+=tableCard('By type',gr,[{h:'Type',k:'VehicleType'},{h:'Vehicles',k:'vehicles',r:1},{h:'Litres',k:'litres',r:1,f:v=>v.toLocaleString()},{h:'₹',k:'rs',r:1,f:v=>money(v)}],'fns_bytype',r=>drilldown('Indents — '+r.VehicleType,r._rows,DSLCOLS));
+  h+=tableCard('By vehicle',rows,cols,'fns_vehicles',r=>drilldown('Indents — '+r.vk,r._rows,DSLCOLS));
+  return {html:h,after:()=>{mkChart('fns',{type:'doughnut',data:{labels:gr.map(o=>o.VehicleType),datasets:[{data:gr.map(o=>o.litres),backgroundColor:gr.map((_,i)=>alpha(PAL[i%PAL.length],.8)),borderColor:'#141b26',borderWidth:2}]},options:{cutout:'48%',plugins:{legend:{position:'right'}}}},i=>drilldown('Indents — '+gr[i].VehicleType,gr[i]._rows,DSLCOLS));}};
+};
+
+/* 4 CANCELLED — diesel-only, ALL transport */
+REPORTS.cancel=()=>{
+  const c=fDsl.filter(o=>o.canc);
+  const dims=[['IssuedBy','User'],['Location','Location'],['Bunk','Bunk'],['VehicleType','Vehicle Type'],['vk','Vehicle']];
+  let h=phead('4 · Cancelled Diesel Indents',`All transport · ${c.length} cancelled · ${Math.round(sum(c,o=>o.HSD)).toLocaleString()} L · ${money(sum(c,o=>o.HSDAmount)+sum(c,o=>o.Cash))}. Click any bar to see the indents.`);
+  h+='<div class="grid2">';const afters=[];
+  const ctypes=['bar','pie','bar','polarArea','doughnut'];
+  dims.forEach((d,i)=>{const m=by(c,d[0]);const rows=[...m.entries()].map(([k,a])=>({k:k||'(blank)',cnt:a.length,litres:Math.round(sum(a,o=>o.HSD)),rs:Math.round(sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash)),_rows:a})).sort((x,y)=>y.cnt-x.cnt);const cid='cc'+i;
+    h+=`<div class="card"><div class="chead"><h3>By ${d[1]}</h3><button class="xls" onclick='__EXP["cancel_${d[0]}"]()'>⬇ Excel</button></div><canvas id="${cid}"></canvas></div>`;
+    window.__EXP['cancel_'+d[0]]=()=>xlsx('cancelled_'+d[0],rows,[{h:d[1],k:'k'},{h:'Count',k:'cnt'},{h:'Litres',k:'litres'},{h:'₹',k:'rs'}]);
+    const ct=ctypes[i%ctypes.length];const isBar=ct==='bar';
+    afters.push(()=>{const top=rows.slice(0,10);
+      const ds=isBar?[{data:top.map(r=>r.cnt),backgroundColor:alpha(PAL[i%PAL.length],.85),borderRadius:6}]:[{data:top.map(r=>r.cnt),backgroundColor:top.map((_,x)=>alpha(PAL[x%PAL.length],.8)),borderColor:'#141b26',borderWidth:2}];
+      const opts=isBar?{indexAxis:'y',plugins:{legend:{display:false}}}:{plugins:{legend:{position:'right'}},scales:ct==='polarArea'?{r:{grid:{color:CH.grid},ticks:{backdropColor:'transparent',color:CH.mut}}}:{}};
+      mkChart(cid,{type:ct,data:{labels:top.map(r=>r.k),datasets:ds},options:opts},j=>drilldown('Cancelled '+d[1]+': '+top[j].k,top[j]._rows,DSLCOLS));});});
+  h+='</div>';return {html:h,after:()=>afters.forEach(f=>f())};
+};
+
+/* 5 DRIVER↔VEHICLE — diesel-only ALL */
+REPORTS.driver=()=>{
+  const dv=new Map(),vd=new Map();
+  for(const o of fDslOk){if(!o.Driver||!isTruck(o))continue;if(!dv.has(o.Driver))dv.set(o.Driver,new Set());dv.get(o.Driver).add(o.vk);if(!vd.has(o.vk))vd.set(o.vk,new Set());vd.get(o.vk).add(o.Driver);}
+  const drv=[...dv.entries()].map(([k,s])=>({driver:k,vehicles:s.size,list:[...s].join(', ')})).sort((a,b)=>b.vehicles-a.vehicles);
+  const veh=[...vd.entries()].map(([k,s])=>({vk:k,drivers:s.size,list:[...s].join(', ')})).sort((a,b)=>b.drivers-a.drivers);
+  let h=phead('5 · Driver ↔ Vehicle Crossover',`Trucks &amp; trailers only (crane / coil / hydra / LCV excluded) · derived from diesel indents. One driver across many vehicles, and one vehicle across many drivers.`);
+  h+=`<div class="grid2"><div class="card"><h3>Drivers → most vehicles <span class="hint">click</span></h3><canvas id="dr1"></canvas></div><div class="card"><h3>Vehicles → most drivers <span class="hint">click</span></h3><canvas id="dr2"></canvas></div></div><div class="grid2">`;
+  h+=tableCard('One driver → many vehicles',drv,[{h:'Driver',k:'driver'},{h:'#Veh',k:'vehicles',r:1},{h:'Vehicles',k:'list'}],'driver_multi_vehicle',r=>drilldown('Diesel — driver '+r.driver,fDslOk.filter(o=>o.Driver===r.driver),DSLCOLS));
+  h+=tableCard('One vehicle → many drivers',veh,[{h:'Vehicle',k:'vk'},{h:'#Drv',k:'drivers',r:1},{h:'Drivers',k:'list'}],'vehicle_multi_driver',r=>drilldown('Diesel — '+r.vk,fDslOk.filter(o=>o.vk===r.vk),DSLCOLS));
+  h+=`</div>`;
+  return {html:h,after:()=>{const t1=drv.slice(0,12),t2=veh.slice(0,12);
+    mkChart('dr1',{type:'bar',data:{labels:t1.map(r=>r.driver),datasets:[{data:t1.map(r=>r.vehicles),backgroundColor:CH.pur,borderRadius:4}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Diesel — driver '+t1[i].driver,fDslOk.filter(o=>o.Driver===t1[i].driver),DSLCOLS));
+    mkChart('dr2',{type:'bar',data:{labels:t2.map(r=>r.vk),datasets:[{data:t2.map(r=>r.drivers),backgroundColor:CH.teal,borderRadius:4}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Diesel — '+t2[i].vk,fDslOk.filter(o=>o.vk===t2[i].vk),DSLCOLS));
+  }};
+};
+
+/* 6 CONSUMPTION — diesel-only ALL */
+REPORTS.consumption=()=>{
+  const bm=by(fDslOk,'Bunk'),lm=by(fDslOk,'Location');
+  const mk=m=>[...m.entries()].map(([k,a])=>({k:k||'(blank)',indents:a.length,litres:Math.round(sum(a,o=>o.HSD)),rs:Math.round(sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash)),_rows:a})).sort((x,y)=>y.litres-x.litres);
+  const brows=mk(bm),lrows=mk(lm);const C=[{h:'Name',k:'k'},{h:'Indents',k:'indents',r:1},{h:'Litres',k:'litres',r:1,f:v=>v.toLocaleString()},{h:'₹',k:'rs',r:1,f:v=>money(v)}];
+  let h=phead('6 · Diesel Consumption',`All transport · cancelled indents excluded. Bunk-wise and location-wise.`);
+  h+=`<div class="grid2"><div class="card"><h3>By bunk (top 12) <span class="hint">click</span></h3><canvas id="cn_b"></canvas></div><div class="card"><h3>By location <span class="hint">click</span></h3><canvas id="cn_l"></canvas></div></div>`;
+  h+=tableCard('By bunk',brows,C,'consumption_bunk',r=>drilldown('Diesel — '+r.k,r._rows,DSLCOLS));
+  h+=tableCard('By location',lrows,C,'consumption_location',r=>drilldown('Diesel — '+r.k,r._rows,DSLCOLS));
+  return {html:h,after:()=>{const tb=brows.slice(0,12);
+    mkChart('cn_b',{type:'bar',data:{labels:tb.map(r=>r.k),datasets:[{label:'Litres',data:tb.map(r=>r.litres),backgroundColor:alpha(CH.amb,.85),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Diesel — '+tb[i].k,tb[i]._rows,DSLCOLS));
+    const tl=lrows.slice(0,10);
+    mkChart('cn_l',{type:'pie',data:{labels:tl.map(r=>r.k),datasets:[{data:tl.map(r=>r.litres),backgroundColor:tl.map((_,i)=>alpha(PAL[i%PAL.length],.8)),borderColor:'#141b26',borderWidth:2}]},options:{plugins:{legend:{position:'right'}}}},i=>drilldown('Diesel — '+tl[i].k,tl[i]._rows,DSLCOLS));
+  }};
+};
+
+/* 7 HEAVY + ISOLATED (BT) */
+REPORTS.heavy=()=>{
+  const shipDays=new Map();for(const o of cShip){if(!shipDays.has(o.vk))shipDays.set(o.vk,new Set());shipDays.get(o.vk).add(o.d);}
+  const dn=s=>Math.round(new Date(s)/864e5);
+  const buildRows=pool=>{const dm=by(pool,'vk');return [...dm.entries()].map(([vk,a])=>{const litres=Math.round(sum(a,o=>o.HSD));const sd=new Set([...(shipDays.get(vk)||[])].map(dn));let iso=0,isoRows=[];for(const o of a){const x=dn(o.d);let near=false;for(let k=-2;k<=2;k++)if(sd.has(x+k)){near=true;break;}if(!near){iso++;isoRows.push(o);}}return{vk,VehicleType:a[0].VehicleType,indents:a.length,litres,isolated:iso,isoPct:Math.round(1000*iso/a.length)/10,_rows:a,_iso:isoRows};}).sort((x,y)=>y.litres-x.litres);};
+  const truckRows=buildRows(cDslOk.filter(isTruck));
+  const equipRows=buildRows(cDslOk.filter(o=>!isTruck(o)));
+  const cols=[{h:'Vehicle',k:'vk'},{h:'Type',k:'VehicleType'},{h:'Indents',k:'indents',r:1},{h:'Litres',k:'litres',r:1,f:v=>v.toLocaleString()},{h:'Isolated',k:'isolated',r:1},{h:'%iso',k:'isoPct',r:1,f:v=>`<span class="tag ${v>50?'t-red':v>20?'t-amb':'t-blu'}">${v}%</span>`}];
+  let h=phead('7 · Heavy Diesel & Isolated Fuelling',`Own BT fleet · split into trucks &amp; trailers and equipment (crane / coil / hydra / LCV). Isolated = fuel with no shipment within ±2 days.`);
+  // section A trucks
+  h+=`<div class="card"><h3>🚛 Trucks &amp; Trailers</h3></div>`;
+  h+=`<div class="grid2"><div class="card"><h3>Top consumers <span class="hint">click</span></h3><canvas id="hv1"></canvas></div><div class="card"><h3>Litres vs isolation % <span class="hint">click a point</span></h3><canvas id="hv2"></canvas></div></div>`;
+  h+=tableCard('Trucks — heavy diesel & isolated',truckRows,cols,'heavy_trucks',r=>drilldown('Isolated fuel — '+r.vk,r._iso.length?r._iso:r._rows,DSLCOLS));
+  // section B equipment
+  h+=`<div class="card" style="margin-top:26px"><h3>🏗️ Equipment · Crane / Coil / Hydra / LCV</h3></div>`;
+  h+=`<div class="card"><h3>Equipment diesel by vehicle <span class="hint">click</span></h3><canvas id="hv3"></canvas></div>`;
+  h+=tableCard('Equipment — heavy diesel',equipRows,cols,'heavy_equipment',r=>drilldown('Diesel — '+r.vk,r._rows,DSLCOLS));
+  return {html:h,after:()=>{
+    const t1=truckRows.slice(0,12);
+    mkChart('hv1',{type:'bar',data:{labels:t1.map(r=>r.vk),datasets:[{label:'Litres',data:t1.map(r=>r.litres),backgroundColor:t1.map(()=>alpha(CH.red,.85)),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Diesel — '+t1[i].vk,t1[i]._rows,DSLCOLS));
+    const sc=truckRows.filter(r=>r.indents>=2);
+    mkChart('hv2',{type:'scatter',data:{datasets:[{label:'Vehicles',data:sc.map(r=>({x:r.litres,y:r.isoPct,vk:r.vk})),backgroundColor:sc.map(r=>r.isoPct>50?alpha(CH.red,.8):r.isoPct>20?alpha(CH.amb,.8):alpha(CH.blu,.7)),pointRadius:8,pointHoverRadius:11}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.vk}: ${c.raw.x.toLocaleString()} L · ${c.raw.y}% isolated`}}},scales:{x:{title:{display:true,text:'Litres consumed',font:{size:16}},grid:{color:CH.grid}},y:{title:{display:true,text:'% fuel events isolated',font:{size:16}},grid:{color:CH.grid}}}}},i=>{const pt=sc[i];if(pt)drilldown('Isolated fuel — '+pt.vk,truckRows.find(r=>r.vk===pt.vk)._iso,DSLCOLS);});
+    const t3=equipRows.slice(0,15);
+    mkChart('hv3',{type:'bar',data:{labels:t3.map(r=>r.vk),datasets:[{label:'Litres',data:t3.map(r=>r.litres),backgroundColor:t3.map(()=>alpha(CH.pur,.85)),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Diesel — '+t3[i].vk,t3[i]._rows,DSLCOLS));
+  }};
+};
+
+/* 8 CANCEL TAT — diesel-only ALL */
+REPORTS.tat=()=>{
+  const c=fDsl.filter(o=>o.canc&&o.cancelDT&&o.issueDT).map(o=>({...o,tat:(new Date(o.cancelDT)-new Date(o.issueDT))/36e5})).filter(o=>o.tat>=0);
+  c.forEach(o=>o.tatR=Math.round(o.tat*10)/10);
+  const med=c.length?Math.round(10*[...c].sort((a,b)=>a.tat-b.tat)[Math.floor(c.length/2)].tat)/10:0;
+  const dims=[['IssuedBy','User'],['Location','Location'],['Bunk','Bunk'],['VehicleType','Vehicle Type']];
+  let h=phead('8 · Cancelled-Indent Turnaround',`All transport · real TAT = IndentCanceledDt − IssueDateTime. ${c.length} indents · median ${med} h.`);
+  h+='<div class="grid2">';const afters=[];const dcols=[...DSLCOLS,{h:'TAT h',k:'tatR',r:1}];
+  const ctypes=['bar','pie','bar','polarArea'];
+  dims.forEach((d,i)=>{const m=by(c,d[0]);const rows=[...m.entries()].map(([k,a])=>({k:k||'(blank)',cnt:a.length,avgTat:Math.round(10*sum(a,o=>o.tat)/a.length)/10,maxTat:Math.round(10*Math.max(...a.map(o=>o.tat)))/10,_rows:a})).sort((x,y)=>y.avgTat-x.avgTat);const cid='tt'+i;
+    h+=`<div class="card"><div class="chead"><h3>Avg TAT (h) by ${d[1]}</h3><button class="xls" onclick='__EXP["tat_${d[0]}"]()'>⬇ Excel</button></div><canvas id="${cid}"></canvas></div>`;
+    window.__EXP['tat_'+d[0]]=()=>xlsx('cancel_tat_'+d[0],rows,[{h:d[1],k:'k'},{h:'Cancelled',k:'cnt'},{h:'Avg TAT h',k:'avgTat'},{h:'Max TAT h',k:'maxTat'}]);
+    const ct=ctypes[i%ctypes.length];const isBar=ct==='bar';
+    afters.push(()=>{const top=rows.slice(0,10);
+      const ds=isBar?[{label:'Avg TAT (h)',data:top.map(r=>r.avgTat),backgroundColor:alpha(PAL[i%PAL.length],.85),borderRadius:6}]:[{data:top.map(r=>r.avgTat),backgroundColor:top.map((_,x)=>alpha(PAL[x%PAL.length],.8)),borderColor:'#141b26',borderWidth:2}];
+      const opts=isBar?{indexAxis:'y',plugins:{legend:{display:false}}}:{plugins:{legend:{position:'right'}},scales:ct==='polarArea'?{r:{grid:{color:CH.grid},ticks:{backdropColor:'transparent',color:CH.mut}}}:{}};
+      mkChart(cid,{type:ct,data:{labels:top.map(r=>r.k),datasets:ds},options:opts},j=>drilldown('Cancelled '+d[1]+': '+top[j].k,top[j]._rows,dcols));});});
+  h+='</div>';return {html:h,after:()=>afters.forEach(f=>f())};
+};
+
+/* 9 IRREGULAR (BT) */
+REPORTS.irregular=()=>{
+  const m=by(cShip,'vk');const dn=s=>Math.round(new Date(s)/864e5);
+  let rows=[...m.entries()].map(([vk,a])=>{const days=[...new Set(a.map(o=>dn(o.d)))].sort((x,y)=>x-y);let maxGap=0,big=0;for(let i=1;i<days.length;i++){const g=days[i]-days[i-1]-1;if(g>maxGap)maxGap=g;if(g>=3)big++;}return{vk,VehicleType:a[0].VehicleType,trips:a.length,activeDays:days.length,maxGap,bigGaps:big,_rows:a};}).filter(r=>r.activeDays>=2).sort((x,y)=>y.maxGap-x.maxGap);
+  const cols=[{h:'Vehicle',k:'vk'},{h:'Type',k:'VehicleType'},{h:'Trips',k:'trips',r:1},{h:'Active',k:'activeDays',r:1},{h:'Longest gap',k:'maxGap',r:1,f:v=>`<span class="tag ${v>=7?'t-red':v>=3?'t-amb':'t-blu'}">${v}d</span>`},{h:'Gaps≥3d',k:'bigGaps',r:1}];
+  const grp=by(rows.filter(r=>r.maxGap>=3),'VehicleType');
+  let h=phead('9 · Irregular Shipment Pattern',`Own BT fleet · vehicles with long idle gaps between runs.`);
+  h+=`<div class="card"><h3>Vehicles with ≥3-day gaps by type <span class="hint">click</span></h3><canvas id="ir"></canvas></div>`;
+  h+=tableCard('Irregular vehicles',rows,cols,'irregular',r=>drilldown('Shipments — '+r.vk,r._rows,SHIPCOLS));
+  return {html:h,after:()=>{const lab=[...grp.keys()];mkChart('ir',{type:'polarArea',data:{labels:lab,datasets:[{data:lab.map(l=>grp.get(l).length),backgroundColor:lab.map((_,i)=>alpha(PAL[i%PAL.length],.75)),borderColor:'#141b26',borderWidth:2}]},options:{plugins:{legend:{position:'right'}},scales:{r:{grid:{color:CH.grid},ticks:{backdropColor:'transparent',color:CH.mut}}}}},i=>drilldown('Irregular — '+lab[i],grp.get(lab[i]),cols));}};
+};
+
+/* 10 AVERAGES (BT) */
+REPORTS.avg=()=>{
+  const mk=key=>{const m=by(cShip,key);return [...m.entries()].map(([k,a])=>({k:k||'(blank)',trips:a.length,totNt:Math.round(sum(a,o=>o.NtWt)),avgNt:Math.round(100*sum(a,o=>o.NtWt)/a.length)/100,_rows:a})).sort((x,y)=>y.trips-x.trips);};
+  const vrows=mk('vk'),lrows=mk('Location'),trows=mk('ShipmentType');
+  const C=lbl=>[{h:lbl,k:'k'},{h:'Trips',k:'trips',r:1},{h:'Total t',k:'totNt',r:1,f:v=>v.toLocaleString()},{h:'Avg t/trip',k:'avgNt',r:1}];
+  let h=phead('10 · Shipment Averages',`Own BT fleet · average net tonnes per trip, vehicle-wise, location-wise and shipment-type-wise.`);
+  h+=`<div class="grid2"><div class="card"><h3>Avg t/trip by shipment type <span class="hint">click</span></h3><canvas id="av_t"></canvas></div><div class="card"><h3>Avg t/trip by location <span class="hint">click</span></h3><canvas id="av_l"></canvas></div></div>`;
+  h+=tableCard('Avg by shipment type',trows,C('Shipment Type'),'avg_shipment',r=>drilldown('Shipments — '+r.k,r._rows,SHIPCOLS));
+  h+=tableCard('Avg by location',lrows,C('Location'),'avg_location',r=>drilldown('Shipments — '+r.k,r._rows,SHIPCOLS));
+  h+=tableCard('Avg by vehicle',vrows,C('Vehicle'),'avg_vehicle',r=>drilldown('Shipments — '+r.k,r._rows,SHIPCOLS));
+  return {html:h,after:()=>{mkChart('av_t',{type:'bar',data:{labels:trows.map(r=>r.k),datasets:[{label:'Avg t/trip',data:trows.map(r=>r.avgNt),backgroundColor:trows.map((_,i)=>alpha(PAL[i%PAL.length],.85)),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Shipments — '+trows[i].k,trows[i]._rows,SHIPCOLS));
+    const tl=lrows.slice(0,15);mkChart('av_l',{type:'line',data:{labels:tl.map(r=>r.k),datasets:[{label:'Avg t/trip',data:tl.map(r=>r.avgNt),borderColor:CH.blu,backgroundColor:alpha(CH.blu,.15),fill:true,tension:.35,pointRadius:5,pointBackgroundColor:CH.blu}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{maxRotation:55,minRotation:35}}}}},i=>drilldown('Shipments — '+tl[i].k,tl[i]._rows,SHIPCOLS));
+  }};
+};
+
+/* 11 EFFICIENCY (BT) */
+REPORTS.efficiency=()=>{
+  const dm=by(cDslOk.filter(isTruck),'vk'),sm=by(cShip.filter(isTruck),'vk');let rows=[];
+  for(const[vk,da]of dm.entries()){const sa=sm.get(vk)||[];const nt=sum(sa,o=>o.NtWt),lit=sum(da,o=>o.HSD);if(nt>0&&lit>0)rows.push({vk,VehicleType:da[0].VehicleType,trips:sa.length,nt:Math.round(nt*10)/10,litres:Math.round(lit),lpt:Math.round(1000*lit/nt)/1000,_rows:da});}
+  rows.sort((a,b)=>b.lpt-a.lpt);const s=[...rows].map(r=>r.lpt).sort((a,b)=>a-b);const med=s[Math.floor(s.length/2)]||0;const q=p=>s[Math.floor(p*s.length)]||0;const thr=Math.round(1000*(q(.75)+1.5*(q(.75)-q(.25))))/1000;
+  const cols=[{h:'Vehicle',k:'vk'},{h:'Type',k:'VehicleType'},{h:'Trips',k:'trips',r:1},{h:'Net t',k:'nt',r:1},{h:'Litres',k:'litres',r:1,f:v=>v.toLocaleString()},{h:'L/tonne',k:'lpt',r:1,f:v=>`<span class="tag ${v>thr?'t-red':'t-blu'}">${v}</span>`}];
+  let h=phead('11 · Fuel Efficiency',`Own BT trucks &amp; trailers (crane / coil / hydra / LCV excluded) · litres of diesel per net tonne moved. Median ${med} · statistical outlier threshold ${thr}.`);
+  h+=`<div class="card"><h3>Worst 20 vehicles by L/tonne <span class="hint">click a bar to drill</span></h3><div style="height:720px"><canvas id="ef"></canvas></div></div>`;
+  h+=tableCard('Fuel per tonne',rows,cols,'efficiency',r=>drilldown('Diesel — '+r.vk,r._rows,DSLCOLS));
+  return {html:h,after:()=>{const t=rows.slice(0,20);mkChart('ef',{type:'bar',data:{labels:t.map(r=>r.vk),datasets:[{label:'L / tonne',data:t.map(r=>r.lpt),backgroundColor:t.map(r=>r.lpt>thr?alpha(CH.red,.85):alpha(CH.amb,.8)),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:16}}},x:{title:{display:true,text:'Litres per net tonne',font:{size:16}},grid:{color:CH.grid}}}}},i=>drilldown('Diesel — '+t[i].vk,t[i]._rows,DSLCOLS));}};
+};
+
+/* 12 MULTI-FILL — diesel-only ALL */
+REPORTS.multifill=()=>{
+  const build=pool=>{const m=by(pool,o=>o.vk+'|'+o.d);return [...m.entries()].filter(([k,a])=>a.length>=3).map(([k,a])=>{const[vk,d]=k.split('|');return{vk,d,VehicleType:a[0].VehicleType,fills:a.length,litres:Math.round(sum(a,o=>o.HSD)),bunks:[...new Set(a.map(o=>o.Bunk))].join(', '),_rows:a};}).sort((x,y)=>y.fills-x.fills);};
+  const truckRows=build(fDslOk.filter(isTruck));
+  const equipRows=build(fDslOk.filter(o=>!isTruck(o)));
+  const cols=[{h:'Date',k:'d'},{h:'Vehicle',k:'vk'},{h:'Type',k:'VehicleType'},{h:'Fills',k:'fills',r:1,f:v=>`<span class="tag t-amb">${v}</span>`},{h:'Litres',k:'litres',r:1},{h:'Bunks',k:'bunks'}];
+  const tg=by(truckRows,'VehicleType'),eg=by(equipRows,'VehicleType');
+  let h=phead('12 · Same-Day Multiple Fuel Indents',`All transport · ≥3 diesel indents for one vehicle in a single day. Split into trucks &amp; trailers and equipment (crane / coil / hydra / LCV).`);
+  h+=`<div class="card"><h3>🚛 Trucks &amp; Trailers</h3></div>`;
+  h+=`<div class="card"><h3>Flagged vehicle-days by type <span class="hint">click</span></h3><canvas id="mf1"></canvas></div>`;
+  h+=tableCard('Trucks — multi-fill vehicle-days',truckRows,cols,'multifill_trucks',r=>drilldown(`${r.vk} · ${r.d}`,r._rows,DSLCOLS));
+  h+=`<div class="card" style="margin-top:26px"><h3>🏗️ Equipment · Crane / Coil / Hydra / LCV</h3></div>`;
+  h+=`<div class="card"><h3>Flagged vehicle-days by type <span class="hint">click</span></h3><canvas id="mf2"></canvas></div>`;
+  h+=tableCard('Equipment — multi-fill vehicle-days',equipRows,cols,'multifill_equipment',r=>drilldown(`${r.vk} · ${r.d}`,r._rows,DSLCOLS));
+  return {html:h,after:()=>{
+    const l1=[...tg.keys()];mkChart('mf1',{type:'bar',data:{labels:l1,datasets:[{label:'Vehicle-days',data:l1.map(l=>tg.get(l).length),backgroundColor:l1.map(()=>alpha(CH.pur,.85)),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Multi-fill — '+l1[i],tg.get(l1[i]),cols));
+    const l2=[...eg.keys()];mkChart('mf2',{type:'bar',data:{labels:l2,datasets:[{label:'Vehicle-days',data:l2.map(l=>eg.get(l).length),backgroundColor:l2.map(()=>alpha(CH.teal,.85)),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Multi-fill — '+l2[i],eg.get(l2[i]),cols));
+  }};
+};
+
+/* ===== DASHBOARD-REQUEST REPORTS (image list, items 1/2/3/5/6) — all sourced from the Diesel API (DieselIndents/GetAllDieselIndentReport), same DSL/fDslOk data already fetched for reports 4/6/8/12 above. No new API calls. ===== */
+function locIssuerReport(title,sub,rows,pfx){
+  const key=o=>(o.Location||'(blank)')+' ‖ '+(o.IssuedBy||'(blank)');
+  const m=by(rows,key);
+  const combo=[...m.entries()].map(([k,a])=>{const[loc,iss]=k.split(' ‖ ');return{Location:loc,IssuedBy:iss,indents:a.length,litres:Math.round(sum(a,o=>o.HSD)),rs:Math.round(sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash)),_rows:a};}).sort((x,y)=>y.litres-x.litres);
+  const locM=by(rows,'Location'),issM=by(rows,'IssuedBy');
+  const mk=mm=>[...mm.entries()].map(([k,a])=>({k:k||'(blank)',indents:a.length,litres:Math.round(sum(a,o=>o.HSD)),rs:Math.round(sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash)),_rows:a})).sort((x,y)=>y.litres-x.litres);
+  const locRows=mk(locM),issRows=mk(issM);
+  const comboCols=[{h:'Location',k:'Location'},{h:'Issuer',k:'IssuedBy'},{h:'Indents',k:'indents',r:1},{h:'Litres',k:'litres',r:1,f:v=>v.toLocaleString()},{h:'₹',k:'rs',r:1,f:v=>money(v)}];
+  const sideC=[{h:'Name',k:'k'},{h:'Indents',k:'indents',r:1},{h:'Litres',k:'litres',r:1,f:v=>v.toLocaleString()},{h:'₹',k:'rs',r:1,f:v=>money(v)}];
+  let h=phead(title,sub);
+  if(!rows.length)h+=`<div class="card"><div class="empty">No indents of this type in the loaded range.</div></div>`;
+  h+=`<div class="grid2"><div class="card"><h3>Litres by location <span class="hint">click</span></h3><canvas id="${pfx}_loc"></canvas></div><div class="card"><h3>Litres by issuer <span class="hint">click</span></h3><canvas id="${pfx}_iss"></canvas></div></div>`;
+  h+=tableCard('Matching indents — raw API columns',rows,RAWDSLCOLS,pfx+'_raw');
+  h+=tableCard('Location × Issuer breakdown',combo,comboCols,pfx+'_combo',r=>drilldown(r.Location+' — '+r.IssuedBy,r._rows,RAWDSLCOLS));
+  h+=tableCard('By location',locRows,sideC,pfx+'_byloc',r=>drilldown('Diesel — '+r.k,r._rows,RAWDSLCOLS));
+  h+=tableCard('By issuer',issRows,sideC,pfx+'_byiss',r=>drilldown('Diesel — '+r.k,r._rows,RAWDSLCOLS));
+  return {html:h,after:()=>{
+    const tl=locRows.slice(0,12);
+    mkChart(pfx+'_loc',{type:'bar',data:{labels:tl.map(r=>r.k),datasets:[{label:'Litres',data:tl.map(r=>r.litres),backgroundColor:alpha(CH.blu,.85),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Diesel — '+tl[i].k,tl[i]._rows,RAWDSLCOLS));
+    const ti=issRows.slice(0,12);
+    mkChart(pfx+'_iss',{type:'bar',data:{labels:ti.map(r=>r.k),datasets:[{label:'Litres',data:ti.map(r=>r.litres),backgroundColor:alpha(CH.teal,.85),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Diesel — '+ti[i].k,ti[i]._rows,RAWDSLCOLS));
+  }};
+}
+
+/* Item 1 — BY CAN, location wise with issuer */
+REPORTS.bycan=()=>locIssuerReport('A1 · Diesel — By Can',
+  `Diesel API (DieselIndents) · indents where Vehicle Number is blank or contains "BY CAN" (diesel drawn into a can, not tied to a registered vehicle) · active (non-cancelled) · location-wise with issuer.`,
+  fDslOk.filter(isByCanVehicle),'bycan');
+
+/* Item 2 — CAR AND LMV VEHICLE, location wise with issuer */
+REPORTS.carlmv=()=>locIssuerReport('A2 · Diesel — Car & LMV Vehicles',
+  `Diesel API (DieselIndents) · indents where Vehicle Type contains "Car" or "LMV" · active (non-cancelled) · location-wise with issuer.`,
+  fDslOk.filter(o=>isCarLmv(o.VehicleType)),'carlmv');
+
+/* Item 3 — CRANES HSD, location and issuer */
+REPORTS.cranes=()=>locIssuerReport('A3 · Diesel (HSD) — Cranes',
+  `Diesel API (DieselIndents) · indents where Vehicle Type contains "Crane" · active (non-cancelled) · location-wise with issuer.`,
+  fDslOk.filter(o=>isCraneT(o.VehicleType)),'cranes');
+
+/* Item 5 — OST PAYMENTS PENDING LIST
+   Per your instruction: this tab is driven by an "OwnerName" column on the Diesel API — a row belongs here
+   only when OwnerName's value is "Pending" (case/spacing-insensitive). That field does not exist in the
+   connected API yet, so resolveOwner()/OWNER_FIELD_CANDIDATES (see the "OWNER-NAME / 'Pending' RESOLUTION"
+   block above ingest()) looks for it under a few likely spellings on every diesel row's raw API record and
+   simply finds nothing right now — which is exactly why this tab currently shows 0 pending indents / ₹0, with
+   no fallback to any other calculation. The moment your backend starts sending OwnerName (under any of the
+   candidate spellings), this tab picks it up automatically with no further code changes needed. */
+REPORTS.ostpending=()=>{
+  const isPending=o=>o.OwnerName&&String(o.OwnerName).trim().toLowerCase()==='pending';
+  const rows=fDsl.filter(o=>!o.canc&&isPending(o)).map(o=>({...o,due:Math.round(o.HSDAmount*100)/100})).sort((a,b)=>b.due-a.due);
+  const ownerFieldSeen=fDsl.find(o=>o.OwnerName)?.ownerField||null;
+  // Headers are the actual Diesel API field names (see RAWDSLCOLS above) so this table can be checked column-
+  // by-column against the raw API payload; OwnerName is the one exception — it's resolved from whichever raw
+  // field spelling actually carried it (see resolveOwner()/OWNER_FIELD_CANDIDATES), so its column keeps that context.
+  const cols=[{h:'Date',k:'d'},{h:'IndentNo',k:'IndentNo'},{h:'VehicleNo',k:'vk'},{h:'VehicleType',k:'VehicleType'},{h:'Bunk',k:'Bunk'},{h:'Location',k:'Location'},{h:'OwnerName (resolved)',k:'OwnerName',f:(v,r)=>`<span class="tag t-amb">${v||''}</span> <span class="tag t-blu" style="margin-left:6px;font-size:13px">${r.ownerField||'?'}</span>`},{h:'HSDAmount (pending ₹)',k:'due',r:1,f:v=>`<span class="tag t-amb">${money(v)}</span>`},{h:'IssuedBy',k:'IssuedBy'}];
+  const byBunk=by(rows,'Bunk'),byLoc=by(rows,'Location');
+  const bR=[...byBunk.entries()].map(([k,a])=>({k:k||'(blank)',due:Math.round(sum(a,o=>o.due)),_rows:a})).sort((x,y)=>y.due-x.due);
+  const lR=[...byLoc.entries()].map(([k,a])=>({k:k||'(blank)',due:Math.round(sum(a,o=>o.due)),_rows:a})).sort((x,y)=>y.due-x.due);
+  const totalDue=sum(rows,o=>o.due);
+  const k=[['bad',rows.length.toLocaleString(),'Pending indents'],['blu',uniq(rows,o=>o.Bunk),'Bunks involved']];
+  let h=phead('5 · OST Payments — Pending List',`Diesel API (DieselIndents) · active indents where OwnerName = "Pending". OwnerName is not yet returned by the connected API — this will populate automatically once your backend adds it; until then this shows 0/blank by design, not an error.`);
+  h+=`<div class="kpis">${k.map(x=>`<div class="kpi ${x[0]}"><div class="n">${x[1]}</div><div class="l">${x[2]}</div></div>`).join('')}</div>`;
+  if(!rows.length){
+    h+=`<div class="card"><p class="note" style="margin:0">${ownerFieldSeen
+      ?`No indent currently has OwnerName = "Pending" — the field <b>${ownerFieldSeen}</b> is present on your data, but no value in it reads "Pending" for the loaded range.`
+      :`No "OwnerName" field was found on any diesel indent in the loaded range yet — the connected Diesel API doesn't return it at this time. As soon as it does (under any of: ${OWNER_FIELD_CANDIDATES.join(', ')}), this tab will start listing the indents where it reads "Pending" automatically.`}</p></div>`;
+  }
+  h+=`<div class="grid2"><div class="card"><h3>Outstanding ₹ by bunk <span class="hint">click</span></h3><canvas id="ost_b"></canvas></div><div class="card"><h3>Outstanding ₹ by location <span class="hint">click</span></h3><canvas id="ost_l"></canvas></div></div>`;
+  h+=tableCard('Pending (OwnerName = "Pending") indents',rows,cols,'ost_pending');
+
+
+  return {html:h,after:()=>{
+    const b12=bR.slice(0,12);
+    mkChart('ost_b',{type:'bar',data:{labels:b12.map(r=>r.k),datasets:[{label:'₹ Outstanding',data:b12.map(r=>r.due),backgroundColor:alpha(CH.amb,.85),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Pending — '+b12[i].k,b12[i]._rows,cols));
+    const l12=lR.slice(0,12);
+    mkChart('ost_l',{type:'bar',data:{labels:l12.map(r=>r.k),datasets:[{label:'₹ Outstanding',data:l12.map(r=>r.due),backgroundColor:alpha(CH.red,.85),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Pending — '+l12[i].k,l12[i]._rows,cols));
+  }};
+};
+
+/* Item 6 — ONE PAGE SUMMARY WITH ALL DATA, location and issuer wise */
+/* Builds the fully-dynamic, continuous-paragraph narrative for the One-Page Summary. Every name, number,
+   date and place below comes from the loaded rows/cancAll at render time — nothing is written in here as
+   fixed sample data, so this text changes automatically whenever a different range or a different Diesel
+   API/Excel dataset is loaded. Priority order requested: overall quantity → vehicle/driver → location/bunk
+   → Issued By → HSD/category & unusual values → cancellations last. */
+function onePageNarrative(rows,cancAll){
+  if(!rows.length&&!cancAll.length)return'<p class="mut">No diesel data loaded for this range.</p>';
+  const s=[];
+  const grp=(pool,field)=>{const f=by(pool.filter(o=>o[field]&&String(o[field]).trim()!==''),field);
+    return[...f.entries()].map(([kk,a])=>({k:kk,litres:sum(a,o=>o.HSD),indents:a.length,rs:sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash)}));};
+
+  // 1) overall quantity — the headline numbers
+  const totalLitres=sum(rows,o=>o.HSD),totalIndents=rows.length,totalValue=sum(rows,o=>o.HSDAmount)+sum(rows,o=>o.Cash);
+  if(totalIndents){
+    s.push(`Over the loaded date range, the fleet drew a total of <b>${nfmt(totalLitres)} litres</b> of diesel across <b>${totalIndents.toLocaleString()}</b> active indents worth <b>${money(totalValue)}</b>, averaging <b>${nfmt(totalLitres/totalIndents)} L</b> per indent.`);
+  }
+
+  // 2) vehicle findings — highest / lowest usage
+  const vehRows=grp(rows,'vk');
+  if(vehRows.length){
+    const byLitresDesc=[...vehRows].sort((a,b)=>b.litres-a.litres);
+    const top=byLitresDesc[0],low=byLitresDesc[byLitresDesc.length-1];
+    let seg=`The vehicle with the highest diesel usage was <b>${top.k}</b>, drawing <b>${nfmt(top.litres)} L</b> across ${top.indents} indent${top.indents===1?'':'s'}`;
+    if(vehRows.length>1&&low.k!==top.k)seg+=`, while <b>${low.k}</b> had the lowest usage among active vehicles at <b>${nfmt(low.litres)} L</b>`;
+    s.push(seg+'.');
+  }
+
+  // driver findings
+  const drvRows=grp(rows,'Driver');
+  if(drvRows.length){
+    const byLitresDesc=[...drvRows].sort((a,b)=>b.litres-a.litres);
+    const top=byLitresDesc[0];
+    let seg=`Among drivers, <b>${top.k}</b> was linked to the most diesel drawn — <b>${nfmt(top.litres)} L</b> over ${top.indents} indent${top.indents===1?'':'s'}`;
+    if(drvRows.length>1){const low=byLitresDesc[byLitresDesc.length-1];if(low.k!==top.k)seg+=`, compared with <b>${low.k}</b> at the low end with <b>${nfmt(low.litres)} L</b>`;}
+    s.push(seg+'.');
+  }
+
+  // 3) location / bunk findings
+  const locRows=grp(rows,'Location');
+  if(locRows.length){
+    const byLitresDesc=[...locRows].sort((a,b)=>b.litres-a.litres);
+    const top=byLitresDesc[0];
+    const share=totalLitres?Math.round(1000*top.litres/totalLitres)/10:0;
+    let seg=`By location, <b>${top.k}</b> recorded the highest diesel draw at <b>${nfmt(top.litres)} L</b> (~${share}% of total usage)`;
+    if(locRows.length>1){const low=byLitresDesc[byLitresDesc.length-1];if(low.k!==top.k)seg+=`, whereas <b>${low.k}</b> saw the least at <b>${nfmt(low.litres)} L</b>`;}
+    s.push(seg+'.');
+  }
+  const bunkRows=grp(rows,'Bunk');
+  if(bunkRows.length){
+    const top=[...bunkRows].sort((a,b)=>b.litres-a.litres)[0];
+    s.push(`The busiest fuel bunk was <b>${top.k}</b>, supplying <b>${nfmt(top.litres)} L</b> across ${top.indents} indent${top.indents===1?'':'s'}${bunkRows.length>1?` out of ${bunkRows.length} bunks used in this range`:''}.`);
+  }
+
+  // 4) Issued By findings (active indents — who issued the most)
+  const issRows=grp(rows,'IssuedBy');
+  if(issRows.length){
+    const byLitres=[...issRows].sort((a,b)=>b.litres-a.litres);
+    const byCount=[...issRows].sort((a,b)=>b.indents-a.indents);
+    let seg=`On the Issued By side, <b>${byLitres[0].k}</b> issued the most diesel overall at <b>${nfmt(byLitres[0].litres)} L</b> across ${byLitres[0].indents} indent${byLitres[0].indents===1?'':'s'}`;
+    if(byCount[0].k!==byLitres[0].k)seg+=`, while <b>${byCount[0].k}</b> raised the most indents by count at <b>${byCount[0].indents}</b>`;
+    s.push(seg+'.');
+  }
+
+  // 5) HSD / category findings + unusual values
+  const cm=by(rows,o=>dieselCat(o.VehicleType));
+  const catRows=[...cm.entries()].map(([kk,a])=>({k:kk,litres:sum(a,o=>o.HSD),indents:a.length})).sort((a,b)=>b.litres-a.litres);
+  if(catRows.length){
+    const top=catRows[0],share=totalLitres?Math.round(1000*top.litres/totalLitres)/10:0;
+    s.push(`By vehicle category, <b>${top.k}</b> accounted for the largest share of diesel at <b>${nfmt(top.litres)} L</b> (~${share}% of the total).`);
+  }
+  if(rows.length){
+    const maxFill=[...rows].sort((a,b)=>b.HSD-a.HSD)[0];
+    const avgL=totalLitres/totalIndents;
+    if(maxFill&&maxFill.HSD>0){
+      let seg=`The single largest diesel fill recorded was <b>${nfmt(maxFill.HSD)} L</b> for vehicle <b>${maxFill.vk||'(unknown)'}</b> on <b>${maxFill.d||'an unrecorded date'}</b> at <b>${maxFill.Location||'an unrecorded location'}</b>`;
+      if(avgL>0&&maxFill.HSD>avgL*3)seg+=`, well above the ${nfmt(avgL)} L average per indent`;
+      s.push(seg+'.');
+    }
+  }
+
+  // 6) cancellations — last. A short lead-in sentence closes the paragraph, then every relevant grouping
+  //    (Issued By, location, vehicle, bunk, vehicle/HSD category) is rendered as its own set of +/- rows —
+  //    accordionGroups() is generic, so this works automatically for whatever groups exist in the data,
+  //    not just Issued By. Each row's + expands to the full indent table for that group, − collapses it,
+  //    and nothing about the page reloads or scrolls when you toggle one, so you never lose your place.
+  let cancBlock='';
+  if(cancAll.length){
+    const cancLitres=sum(cancAll,o=>o.HSD),cancValue=sum(cancAll,o=>o.HSDAmount)+sum(cancAll,o=>o.Cash);
+    const withTat=cancAll.map(o=>({...o,tatR:(o.issueDT&&o.cancelDT)?Math.round(10*(new Date(o.cancelDT)-new Date(o.issueDT))/36e5)/10:null}));
+    const topUser=[...by(withTat,o=>o.cancelBy||'(unspecified)').entries()].map(([nm,a])=>({nm:nm||'(unspecified)',cnt:a.length})).sort((a,b)=>b.cnt-a.cnt)[0];
+    s.push(`Finally, on cancellations: <b>${cancAll.length}</b> indent${cancAll.length===1?' was':'s were'} cancelled in this range, representing <b>${nfmt(cancLitres)} L</b> and <b>${money(cancValue)}</b> that did not convert into fuel drawn — <b>${topUser.nm}</b> was responsible for the most, with <b>${topUser.cnt}</b> cancelled indent${topUser.cnt===1?'':'s'}. Every grouping below is expandable — click + to see the indents, − to hide them again.`);
+
+    const dims=[
+      ['By Issued By',o=>o.cancelBy||'(unspecified)',(ks,cs,n)=>`${ks} cancelled ${cs} indent${n===1?'':'s'} during the selected period.`,'accIss','Issued By'],
+      ['By location',o=>o.Location,(ks,cs,n)=>`${cs} indent${n===1?'':'s'} were cancelled at ${ks} during the selected period.`,'accLoc','Location'],
+      ['By vehicle',o=>o.vk,(ks,cs,n)=>`${cs} indent${n===1?'':'s'} were cancelled for vehicle ${ks} during the selected period.`,'accVeh','Vehicle'],
+      ['By bunk',o=>o.Bunk,(ks,cs,n)=>`${cs} indent${n===1?'':'s'} were cancelled at bunk ${ks} during the selected period.`,'accBunk','Bunk'],
+      ['By vehicle / HSD category',o=>dieselCat(o.VehicleType),(ks,cs,n)=>`${cs} indent${n===1?'':'s'} were cancelled among ${ks} vehicles during the selected period.`,'accCat','Vehicle category'],
+    ];
+    cancBlock=dims.map(([label,keyFn,sentenceFn,pfx,fieldLabel])=>
+      `<div style="margin-top:20px"><h4 style="margin:0 0 8px;font-size:18px;color:var(--txt2);font-weight:600">${label}</h4>${accordionGroups(withTat,keyFn,sentenceFn,pfx,fieldLabel)}</div>`
+    ).join('');
+  }else{
+    s.push('No indents were cancelled in this range.');
+  }
+
+  const paragraph=`<p style="font-size:19px;line-height:1.8;color:var(--txt2)">${s.join(' ')}</p>`;
+  return paragraph+cancBlock;
+}
+
+REPORTS.onepage=()=>{
+  const rows=fDslOk;
+  const cm=by(rows,o=>dieselCat(o.VehicleType));
+  const catOrder=['Trucks & Trailers','Cranes','Car & LMV','By Can','Other Equipment'];
+  const catRows=catOrder.filter(kk=>cm.has(kk)).map(kk=>{const a=cm.get(kk);return{k:kk,indents:a.length,litres:Math.round(sum(a,o=>o.HSD)),rs:Math.round(sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash)),_rows:a};});
+  const key=o=>(o.Location||'(blank)')+' ‖ '+(o.IssuedBy||'(blank)');
+  const m=by(rows,key);
+  const combo=[...m.entries()].map(([kk,a])=>{const[loc,iss]=kk.split(' ‖ ');return{Location:loc,IssuedBy:iss,indents:a.length,litres:Math.round(sum(a,o=>o.HSD)),rs:Math.round(sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash)),_rows:a};}).sort((x,y)=>y.litres-x.litres);
+  const locM=by(rows,'Location'),issM=by(rows,'IssuedBy');
+  const mk=mm=>[...mm.entries()].map(([kk,a])=>({k:kk||'(blank)',indents:a.length,litres:Math.round(sum(a,o=>o.HSD)),rs:Math.round(sum(a,o=>o.HSDAmount)+sum(a,o=>o.Cash)),_rows:a})).sort((x,y)=>y.litres-x.litres);
+  const locRows=mk(locM),issRows=mk(issM);
+  const comboCols=[{h:'Location',k:'Location'},{h:'Issuer',k:'IssuedBy'},{h:'Indents',k:'indents',r:1},{h:'Litres',k:'litres',r:1,f:v=>v.toLocaleString()},{h:'₹',k:'rs',r:1,f:v=>money(v)}];
+  const sideC=[{h:'Name',k:'k'},{h:'Indents',k:'indents',r:1},{h:'Litres',k:'litres',r:1,f:v=>v.toLocaleString()},{h:'₹',k:'rs',r:1,f:v=>money(v)}];
+  const cancAll=fDsl.filter(o=>o.canc);
+  let h=phead('6 · One-Page Summary — All Diesel Data',`Diesel API (DieselIndents) · every active indent in range, split by category, location and issuer in one place. Graphs first, a dynamic plain-English summary at the end. Click any chart or row to drill into the underlying indents.`);
+  h+=`<div class="grid2"><div class="card"><h3>By category <span class="hint">click</span></h3><canvas id="op_cat"></canvas></div><div class="card"><h3>Top locations by litres <span class="hint">click</span></h3><canvas id="op_loc"></canvas></div></div>`;
+  h+=`<div class="card"><h3>Top issuers by litres <span class="hint">click</span></h3><canvas id="op_iss"></canvas></div>`;
+  h+=tableCard('Category breakdown',catRows,[{h:'Category',k:'k'},{h:'Indents',k:'indents',r:1},{h:'Litres',k:'litres',r:1,f:v=>v.toLocaleString()},{h:'₹',k:'rs',r:1,f:v=>money(v)}],'onepage_category',r=>drilldown('Diesel — '+r.k,r._rows,DSLCOLS));
+  h+=tableCard('Location × Issuer breakdown',combo,comboCols,'onepage_combo',r=>drilldown(r.Location+' — '+r.IssuedBy,r._rows,DSLCOLS));
+  h+=tableCard('By location',locRows,sideC,'onepage_byloc',r=>drilldown('Diesel — '+r.k,r._rows,DSLCOLS));
+  h+=tableCard('By issuer',issRows,sideC,'onepage_byiss',r=>drilldown('Diesel — '+r.k,r._rows,DSLCOLS));
+  h+=`<div class="card"><div class="chead"><h3>Summary — in plain English</h3></div>${onePageNarrative(rows,cancAll)}
+    <p class="note" style="margin-top:10px">Generated automatically from the currently-loaded Diesel API data — every figure above recalculates whenever a new date range or dataset is loaded, in order from the biggest overall findings down to smaller ones, with cancellations last. Every group in the cancellation breakdown has its own + / − toggle — click + on any Issued By person, location, vehicle, bunk or vehicle category to expand its cancelled indents inline, and − to collapse it again; nothing else on the page moves when you do.</p></div>`;
+  return {html:h,after:()=>{
+    mkChart('op_cat',{type:'doughnut',data:{labels:catRows.map(r=>r.k),datasets:[{data:catRows.map(r=>r.litres),backgroundColor:catRows.map((_,i)=>alpha(PAL[i%PAL.length],.8)),borderColor:'#141b26',borderWidth:2}]},options:{cutout:'48%',plugins:{legend:{position:'right'}}}},i=>drilldown('Diesel — '+catRows[i].k,catRows[i]._rows,DSLCOLS));
+    const tl=locRows.slice(0,12);
+    mkChart('op_loc',{type:'bar',data:{labels:tl.map(r=>r.k),datasets:[{label:'Litres',data:tl.map(r=>r.litres),backgroundColor:alpha(CH.blu,.85),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Diesel — '+tl[i].k,tl[i]._rows,DSLCOLS));
+    const ti=issRows.slice(0,12);
+    mkChart('op_iss',{type:'bar',data:{labels:ti.map(r=>r.k),datasets:[{label:'Litres',data:ti.map(r=>r.litres),backgroundColor:alpha(CH.teal,.85),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}},i=>drilldown('Diesel — '+ti[i].k,ti[i]._rows,DSLCOLS));
+  }};
+};
+
+/* ===== RAW DATA EXPLORERS ===== */
+REPORTS.rawship=()=>{
+  const types=[...new Set(SHIP.map(o=>o.ShipmentType))].sort();
+  const vtypes=[...new Set(SHIP.map(o=>o.VehicleType))].sort();
+  const locs=[...new Set(SHIP.map(o=>o.Location).filter(Boolean))].sort();
+  let h=phead('Raw Data · Shipments',`Filter loaded shipment records, or re-fetch a different date range directly from the API. Tap the dropdowns to tick multiple values. Export the filtered set to Excel.`);
+  h+=`<div class="filterbar">
+    <div class="fg"><label class="fl">From (API)</label><input type="date" id="rs_from" value="${LOADED.from}"></div>
+    <div class="fg"><label class="fl">To (API)</label><input type="date" id="rs_to" value="${LOADED.to}"></div>
+    <button class="pri" id="rs_fetch">⟳ Fetch from API</button>
+    <div class="fg"><label class="fl">Vehicle no (partial)</label><input id="rs_vk" placeholder="e.g. KA 06 AB"></div>
+    <div class="fg"><label class="fl">Fleet</label><select id="rs_bt"><option value="">All</option><option value="1">BT own only</option><option value="0">Other transport only</option></select></div>
+  </div>
+  <div class="filterbar">
+    ${msHTML('rs_st','Shipment type',types)}
+    ${msHTML('rs_vt','Vehicle type',vtypes)}
+    ${msHTML('rs_loc','Location',locs)}
+    <div class="fg"><label class="fl">&nbsp;</label><button class="pri" id="rs_go">Apply filters</button></div>
+    <div class="fg"><label class="fl">&nbsp;</label><button id="rs_clr">Clear</button></div>
+    <button class="xls" id="rs_xls">⬇ Excel</button>
+    <span class="badge" id="rs_cnt"></span></div>`;
+  h+=`<div id="rs_tbl"></div>`;
+  return {html:h,after:()=>{
+    ['rs_st','rs_vt','rs_loc'].forEach(msInit);
+    const run=()=>{const st=msVals('rs_st'),vt=msVals('rs_vt'),loc=msVals('rs_loc'),vk=norm(rs_vk.value),bt=rs_bt.value;
+      let rows=SHIP.filter(o=>(!st.length||st.includes(o.ShipmentType))&&(!vt.length||vt.includes(o.VehicleType))&&(!loc.length||loc.includes(o.Location))&&(!vk||o.vk.includes(vk))&&(bt===''||(bt==='1'?o.isBT:!o.isBT)));
+      rows=rows.sort((a,b)=>a.d<b.d?1:-1);
+      document.getElementById('rs_cnt').textContent=rows.length.toLocaleString()+' rows · '+nfmt(sum(rows,o=>o.NtWt))+' t';
+      const cols=[{h:'Date',k:'d'},{h:'ShipmentId',k:'shipmentId'},{h:'Vehicle',k:'vk'},{h:'Type',k:'VehicleType'},{h:'Shipment',k:'ShipmentType'},{h:'Net t',k:'NtWt',r:1,f:v=>nfmt(v)},{h:'Location',k:'Location'},{h:'Unload',k:'Unload'},{h:'Product',k:'ProductName'},{h:'Driver',k:'Driver'},{h:'GC No',k:'GCNo'},{h:'Fleet',k:'isBT',f:v=>v?'<span class="tag t-grn">BT</span>':'<span class="tag t-amb">Other</span>'}];
+      document.getElementById('rs_tbl').innerHTML=tableCard('Shipment records',rows,cols,'raw_shipments');
+      window.__EXP['raw_shipments']=()=>xlsx('raw_shipments',rows,cols);
+      document.getElementById('rs_xls').onclick=()=>window.__EXP['raw_shipments']();
+    };
+    document.getElementById('rs_go').onclick=run;
+    document.getElementById('rs_clr').onclick=()=>{['rs_st','rs_vt','rs_loc'].forEach(msClear);rs_vk.value='';rs_bt.value='';run();};
+    document.getElementById('rs_vk').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+    document.getElementById('rs_fetch').onclick=async()=>{const f=rs_from.value,t=rs_to.value;if(!f||!t||f>t){alert('Pick a valid range');return;}
+      try{const raw=await loadRange(f,t);ingest(raw);LOADED={from:f,to:t};applyFilter();render();}catch(e){hideProg();alert('Fetch failed: '+e.message);}};
+    run();
+  }};
+};
+REPORTS.rawdiesel=()=>{
+  const bunks=[...new Set(DSL.map(o=>o.Bunk).filter(Boolean))].sort();
+  const vtypes=[...new Set(DSL.map(o=>o.VehicleType))].sort();
+  const users=[...new Set(DSL.map(o=>o.IssuedBy).filter(Boolean))].sort();
+  let h=phead('Raw Data · Diesel Indents',`Filter loaded diesel indents, or re-fetch a different date range from the API. Includes all transport (own + hired). Multi-select: hold Ctrl / Cmd (or drag). Export the filtered set to Excel.`);
+  h+=`<div class="filterbar">
+    <div class="fg"><label class="fl">From (API)</label><input type="date" id="rd_from" value="${LOADED.from}"></div>
+    <div class="fg"><label class="fl">To (API)</label><input type="date" id="rd_to" value="${LOADED.to}"></div>
+    <button class="pri" id="rd_fetch">⟳ Fetch from API</button>
+    <div class="fg"><label class="fl">Vehicle no (partial)</label><input id="rd_vk" placeholder="e.g. KA 06"></div>
+    <div class="fg"><label class="fl">Status</label><select id="rd_st"><option value="">All</option><option value="ok">Active only</option><option value="canc">Cancelled only</option></select></div>
+    <div class="fg"><label class="fl">Fleet</label><select id="rd_bt"><option value="">All</option><option value="1">BT own only</option><option value="0">Other only</option></select></div>
+  </div>
+  <div class="filterbar">
+    ${msHTML('rd_bk','Bunk',bunks.map(t=>t.replace(/"/g,'')))}
+    ${msHTML('rd_vt','Vehicle type',vtypes)}
+    ${msHTML('rd_ib','Issued by',users)}
+    <div class="fg"><label class="fl">&nbsp;</label><button class="pri" id="rd_go">Apply filters</button></div>
+    <div class="fg"><label class="fl">&nbsp;</label><button id="rd_clr">Clear</button></div>
+    <button class="xls" id="rd_xls">⬇ Excel</button>
+    <span class="badge" id="rd_cnt"></span></div>`;
+  h+=`<div id="rd_tbl"></div>`;
+  return {html:h,after:()=>{
+    ['rd_bk','rd_vt','rd_ib'].forEach(msInit);
+    const run=()=>{const bk=msVals('rd_bk'),vt=msVals('rd_vt'),ib=msVals('rd_ib'),vk=norm(rd_vk.value),st=rd_st.value,bt=rd_bt.value;
+      let rows=DSL.filter(o=>(!bk.length||bk.includes(o.Bunk))&&(!vt.length||vt.includes(o.VehicleType))&&(!ib.length||ib.includes(o.IssuedBy))&&(!vk||o.vk.includes(vk))&&(st===''||(st==='canc'?o.canc:!o.canc))&&(bt===''||(bt==='1'?o.isBT:!o.isBT)));
+      rows=rows.sort((a,b)=>a.d<b.d?1:-1);
+      document.getElementById('rd_cnt').textContent=rows.length.toLocaleString()+' rows · '+Math.round(sum(rows.filter(o=>!o.canc),o=>o.HSD)).toLocaleString()+' L active';
+      const cols=[{h:'Date',k:'d'},{h:'Indent',k:'IndentNo'},{h:'Vehicle',k:'vk'},{h:'Type',k:'VehicleType'},{h:'Litres',k:'HSD',r:1},{h:'₹Amt',k:'HSDAmount',r:1},{h:'Cash',k:'Cash',r:1},{h:'Bunk',k:'Bunk'},{h:'Location',k:'Location'},{h:'IssuedBy',k:'IssuedBy'},{h:'Driver',k:'Driver'},{h:'Fleet',k:'isBT',f:v=>v?'<span class="tag t-grn">BT</span>':'<span class="tag t-amb">Other</span>'},{h:'Cancelled',k:'canc',f:v=>v?'<span class="tag t-red">Yes</span>':''}];
+      document.getElementById('rd_tbl').innerHTML=tableCard('Diesel records',rows,cols,'raw_diesel');
+      window.__EXP['raw_diesel']=()=>xlsx('raw_diesel',rows,cols);
+      document.getElementById('rd_xls').onclick=()=>window.__EXP['raw_diesel']();
+    };
+    document.getElementById('rd_go').onclick=run;
+    document.getElementById('rd_clr').onclick=()=>{['rd_bk','rd_vt','rd_ib'].forEach(msClear);rd_vk.value='';rd_st.value='';rd_bt.value='';run();};
+    document.getElementById('rd_vk').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+    document.getElementById('rd_fetch').onclick=async()=>{const f=rd_from.value,t=rd_to.value;if(!f||!t||f>t){alert('Pick a valid range');return;}
+      try{const raw=await loadRange(f,t);ingest(raw);LOADED={from:f,to:t};applyFilter();render();}catch(e){hideProg();alert('Fetch failed: '+e.message);}};
+    run();
+  }};
+};
+
+/* ===== TABS + BOOT ===== */
+const TABS=[['summary','Summary'],['util','1·Under-utilized'],['underload','2·Under-loaded'],['fuelnoship','3·Fuel-No-Ship'],['cancel','4·Cancelled'],['driver','5·Driver↔Vehicle'],['consumption','6·Consumption'],['heavy','7·Heavy Diesel'],['tat','8·Cancel TAT'],['irregular','9·Irregular'],['avg','10·Averages'],['efficiency','11·Efficiency'],['multifill','12·Multi-fill'],
+  ['bycan','A1·By Can'],['carlmv','A2·Car & LMV'],['cranes','A3·Cranes HSD'],['ostpending','A5·OST Pending'],['onepage','A6·One-Page Summary'],
+  ['rawship','⛃ Raw Shipments'],['rawdiesel','⛃ Raw Diesel']];
+const SEP=new Set(['rawship','bycan']);
+let cur='summary';
+function render(){if(!SHIP.length&&!DSL.length){document.getElementById('pages').innerHTML='<div class="empty">No data loaded for this range.</div>';return;}
+  applyFilter();const r=REPORTS[cur]();document.getElementById('pages').innerHTML=r.html;if(r.after)try{r.after();}catch(e){console.error(e);}}
+function initTabs(){document.getElementById('tabs').innerHTML=TABS.map(t=>`<div class="tab ${t[0]==cur?'on':''} ${SEP.has(t[0])?'sep':''}" data-k="${t[0]}">${t[1]}</div>`).join('');
+  document.querySelectorAll('.tab').forEach(el=>el.onclick=()=>{cur=el.dataset.k;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.k==cur));render();});}
+
+document.getElementById('lbtn').onclick=async()=>{
+  const u=document.getElementById('lu').value,p=document.getElementById('lp').value;const err=document.getElementById('loginErr');err.textContent='Connecting…';
+  try{TOKEN=await login(u,p);sessionStorage.setItem('bp',p);err.textContent='Loading vehicle master…';await loadBT();
+    document.getElementById('login').style.display='none';document.getElementById('app').style.display='';
+    const to=new Date(),from=new Date();from.setDate(from.getDate()-29);document.getElementById('to').value=ymd(to);document.getElementById('from').value=ymd(from);
+    initTabs();
+  }catch(e){err.textContent='Login failed: '+e.message;}
+};
+document.getElementById('lp').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('lbtn').click();});
+document.getElementById('logout').onclick=()=>{TOKEN='';SHIP=[];DSL=[];sessionStorage.removeItem('bp');location.reload();};
+document.getElementById('load').onclick=async()=>{
+  const f=document.getElementById('from').value,t=document.getElementById('to').value;if(!f||!t||f>t){alert('Pick a valid From ≤ To range.');return;}
+  try{const raw=await loadRange(f,t);ingest(raw);LOADED={from:f,to:t};F.vt=document.getElementById('vtf').value||'';cur='summary';
+    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.k==='summary'));render();
+  }catch(e){hideProg();alert('Load failed: '+e.message);}
+};
+document.getElementById('vtf').onchange=()=>{F.vt=document.getElementById('vtf').value||'';render();};
+</script>
+</body></html>
